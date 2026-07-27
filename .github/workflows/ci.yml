@@ -20,10 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    defaults:
-      run:
-        working-directory: frontend
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -50,13 +46,12 @@ jobs:
         run: pnpm lint
 
       - name: Compile and Build
-        run: pnpm build
-
+        run: pnpm frontend:build
 
       - name: Run Frontend Smoke Test (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
-          pnpm dev &
+          pnpm frontend &
           SERVER_PID=$!
           sleep 4
           curl -f http://localhost:3000/ || exit 1
@@ -66,7 +61,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          $proc = Start-Process pnpm -ArgumentList "dev" -PassThru
+          $proc = Start-Process pnpm -ArgumentList "frontend" -PassThru
           Start-Sleep -Seconds 6
           try {
             $res = Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing
