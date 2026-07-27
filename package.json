@@ -15,13 +15,5 @@
     "backend:migrate:win": "backend\\venv\\Scripts\\python backend/manage.py migrate",
     "backend:check:win": "backend\\venv\\Scripts\\python backend/manage.py check"
   },
-  "pnpm": {
-    "overrides": {
-      "brace-expansion": "5.0.8",
-      "react-router": "^8.3.0",
-      "react-router-dom": "^7.18.1",
-      "vite": "^6.4.3",
-      "esbuild": ">=0.25.0"
-    }
-  }
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
 }
