@@ -14,5 +14,14 @@
     "backend:win": "backend\\venv\\Scripts\\python backend/manage.py runserver",
     "backend:migrate:win": "backend\\venv\\Scripts\\python backend/manage.py migrate",
     "backend:check:win": "backend\\venv\\Scripts\\python backend/manage.py check"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion": "5.0.8",
+      "react-router": "^8.3.0",
+      "react-router-dom": "^7.18.1",
+      "vite": "^6.4.3",
+      "esbuild": ">=0.25.0"
+    }
   }
 }
