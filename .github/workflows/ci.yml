@@ -1,10 +1,13 @@
-name: Kyreqo Cross-Platform CI
+name: Kyreqo Integration Pipeline
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+
+
+env:
+  USE_SQLITE: 'True'
 
 jobs:
   # ----------------------------------------------------
@@ -14,6 +17,7 @@ jobs:
     name: Frontend CI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [22.x, 24.x]
@@ -81,6 +85,7 @@ jobs:
     name: Backend CI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.11', '3.12']
@@ -103,6 +108,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Run Database Migrations
+        run: python manage.py migrate
 
       - name: Run Django Configuration Check
         run: python manage.py check
