@@ -1,0 +1,64 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in Kyreqo
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide a clear and concise description of what the bug is.
+      placeholder: E.g. When trying to trigger a POST request with basic auth, the proxy returns a 500 error...
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Where is the bug occurring?
+      options:
+        - Frontend (React Client)
+        - Backend Proxy Engine (Django)
+        - Database / Models
+        - Authentication
+        - Deployment / Environment Config
+        - Other / Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '/dashboard'
+        2. Set HTTP method to 'POST'
+        3. Enter URL 'https://httpbin.org/post'
+        4. Click 'Send'
+        5. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: If applicable, add screenshots or console/terminal logs to help explain your problem.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Info
+      description: OS, Browser version, Python version, Node/PNPM version, etc.
+      placeholder: E.g. OS: Fedora 40, Browser: Chrome 124, Node: 20.11.0, PNPM: 9.0.0
+    validations:
+      required: false

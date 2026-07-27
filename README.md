@@ -1,6 +1,8 @@
-# Kyreqo
+<h1 align="center">Kyreqo</h1>
 
-Kyreqo is a modern web-based API testing platform built with React and Django REST Framework.
+<p align="center">
+  Kyreqo is a modern web-based API testing platform built with React and Django REST Framework.
+</p>
 
 ## Features
 
@@ -29,4 +31,5 @@ Kyreqo is a modern web-based API testing platform built with React and Django RE
 
 ## License
 
-MIT License
+[MIT License](LICENSE)
+

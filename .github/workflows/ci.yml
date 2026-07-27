@@ -1,0 +1,135 @@
+name: Kyreqo Cross-Platform CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ----------------------------------------------------
+  # Frontend Validation (Runs on Ubuntu, Windows & macOS)
+  # ----------------------------------------------------
+  frontend-ci:
+    name: Frontend CI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [22.x, 24.x]
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Code Formatting Check (Prettier)
+        run: pnpm format:check
+
+      - name: Run Code Linting Check (ESLint)
+        run: pnpm lint
+
+      - name: Compile and Build
+        run: pnpm build
+
+
+      - name: Run Frontend Smoke Test (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          pnpm dev &
+          SERVER_PID=$!
+          sleep 4
+          curl -f http://localhost:3000/ || exit 1
+          kill $SERVER_PID
+
+      - name: Run Frontend Smoke Test (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          $proc = Start-Process pnpm -ArgumentList "dev" -PassThru
+          Start-Sleep -Seconds 6
+          try {
+            $res = Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing
+            if ($res.StatusCode -ne 200) { throw "Status code not 200" }
+            Write-Host "Vite Server Started Successfully!"
+          } finally {
+            Stop-Process -Id $proc.Id -Force
+          }
+
+  # ----------------------------------------------------
+
+  # Backend Validation (Runs on Ubuntu, Windows & macOS)
+  # ----------------------------------------------------
+  backend-ci:
+    name: Backend CI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+    defaults:
+      run:
+        working-directory: backend
+
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django Configuration Check
+        run: python manage.py check
+
+      - name: Run Bandit Security Linting
+        run: bandit -r apps/
+
+      - name: Run Backend Smoke Test (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          python manage.py runserver &
+          SERVER_PID=$!
+          sleep 4
+          curl -f http://localhost:8000/health/ || exit 1
+          kill $SERVER_PID
+
+      - name: Run Backend Smoke Test (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          $proc = Start-Process python -ArgumentList "manage.py runserver" -PassThru
+          Start-Sleep -Seconds 6
+          try {
+            $res = Invoke-WebRequest -Uri http://localhost:8000/health/ -UseBasicParsing
+            if ($res.StatusCode -ne 200) { throw "Status code not 200" }
+            Write-Host "Django Server Started Successfully!"
+          } finally {
+            Stop-Process -Id $proc.Id -Force
+          }
+

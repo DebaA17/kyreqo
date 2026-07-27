@@ -1,0 +1,18 @@
+{
+  "name": "kyreqo-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "frontend": "pnpm --filter kyreqo-frontend dev",
+    "frontend:build": "pnpm --filter kyreqo-frontend build",
+    "lint": "pnpm --filter kyreqo-frontend lint",
+    "format": "pnpm --filter kyreqo-frontend format",
+    "format:check": "pnpm --filter kyreqo-frontend format:check",
+    "backend": "backend/venv/bin/python backend/manage.py runserver",
+    "backend:migrate": "backend/venv/bin/python backend/manage.py migrate",
+    "backend:check": "backend/venv/bin/python backend/manage.py check",
+    "backend:win": "backend\\venv\\Scripts\\python backend/manage.py runserver",
+    "backend:migrate:win": "backend\\venv\\Scripts\\python backend/manage.py migrate",
+    "backend:check:win": "backend\\venv\\Scripts\\python backend/manage.py check"
+  }
+}
