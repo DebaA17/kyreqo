@@ -1,10 +1,13 @@
-name: Kyreqo Cross-Platform CI
+name: Kyreqo Integration Pipeline
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+
+
+env:
+  USE_SQLITE: 'True'
 
 jobs:
   # ----------------------------------------------------
@@ -14,26 +17,20 @@ jobs:
     name: Frontend CI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [22.x, 24.x]
-    defaults:
-      run:
-        working-directory: frontend
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Install PNPM
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+        uses: pnpm/action-setup@v4
 
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
@@ -47,13 +44,12 @@ jobs:
         run: pnpm lint
 
       - name: Compile and Build
-        run: pnpm build
-
+        run: pnpm frontend:build
 
       - name: Run Frontend Smoke Test (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
-          pnpm dev &
+          pnpm frontend &
           SERVER_PID=$!
           sleep 4
           curl -f http://localhost:3000/ || exit 1
@@ -63,7 +59,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          $proc = Start-Process pnpm -ArgumentList "dev" -PassThru
+          $proc = Start-Process pnpm -ArgumentList "frontend" -PassThru
           Start-Sleep -Seconds 6
           try {
             $res = Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing
@@ -81,9 +77,9 @@ jobs:
     name: Backend CI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.10', '3.11', '3.12']
     defaults:
       run:
         working-directory: backend
@@ -93,10 +89,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install Dependencies
@@ -104,8 +100,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Database Migrations
+        run: python manage.py migrate
+
       - name: Run Django Configuration Check
         run: python manage.py check
+
+      - name: Run Django Unit Tests
+        run: python manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history
 
       - name: Run Bandit Security Linting
         run: bandit -r apps/

@@ -15,6 +15,7 @@ db.sqlite3
 media/
 staticfiles/
 *.env
+test_auth.py
 
 # Node
 node_modules/
