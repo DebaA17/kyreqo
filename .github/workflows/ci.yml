@@ -106,6 +106,9 @@ jobs:
       - name: Run Django Configuration Check
         run: python manage.py check
 
+      - name: Run Django Unit Tests
+        run: python manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history
+
       - name: Run Bandit Security Linting
         run: bandit -r apps/
 
