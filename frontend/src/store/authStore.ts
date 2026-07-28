@@ -66,7 +66,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         // Load profile details
         await get().loadProfile();
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
+        const message =
+          err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
         set({
           error: message,
           isLoading: false,
@@ -87,7 +88,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         // Log the user in directly after successful registration
         await get().login(data.email, data.password);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Registration failed. Please check your details.';
+        const message =
+          err instanceof Error ? err.message : 'Registration failed. Please check your details.';
         set({
           error: message,
           isLoading: false,
