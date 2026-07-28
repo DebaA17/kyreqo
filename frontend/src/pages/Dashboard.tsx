@@ -186,6 +186,14 @@ export default function Dashboard() {
                     <p className="text-[9px] text-zinc-500 truncate">{user.email}</p>
                   </div>
                 </div>
+                {(user.is_staff || user.is_superuser) && (
+                  <Link
+                    to="/admin"
+                    className="w-full py-2 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-400 hover:text-indigo-300 text-xs font-bold rounded-lg transition-all text-center"
+                  >
+                    Admin Console
+                  </Link>
+                )}
                 <button
                   onClick={logout}
                   className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"

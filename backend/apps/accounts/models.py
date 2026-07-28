@@ -35,3 +35,26 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class LoginAttempt(models.Model):
+    email = models.EmailField()
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='login_attempts'
+    )
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    is_successful = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        status_str = "Success" if self.is_successful else "Failure"
+        return f"{self.email} - {status_str} at {self.timestamp}"
+

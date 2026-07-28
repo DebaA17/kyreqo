@@ -1,7 +1,12 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import WorkspaceViewSet
 
 app_name = 'workspaces'
 
+router = DefaultRouter()
+router.register('', WorkspaceViewSet, basename='workspace')
+
 urlpatterns = [
-    # Workspace routes CRUD
+    path('', include(router.urls)),
 ]
