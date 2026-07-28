@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 from datetime import timedelta
 import dotenv
 
@@ -11,10 +12,11 @@ dotenv.load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kyreqo-development-key-129837192837')
-
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY must be set in environment variables")
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -82,7 +84,7 @@ DB_PORT = os.getenv('DB_PORT', '5432')
 if os.getenv('DATABASE_URL'):
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=not DEBUG)
     }
 elif os.getenv('USE_SQLITE') == 'True' or not DEBUG:
     DATABASES = {
@@ -154,4 +156,4 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # True in dev, restrictive in prod
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173,http://127.0.0.1:8000').split(',')
