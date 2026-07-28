@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Play, Terminal, HelpCircle, Shield, Database } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 interface RequestHeader {
   key: string;
@@ -9,6 +10,7 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const { user, logout } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
   const [headers, setHeaders] = useState<RequestHeader[]>([
@@ -117,7 +119,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-semibold">
             <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-ping"></span>
-            Guest Sandbox
+            {user ? `${user.first_name || 'User'}'s Sandbox` : 'Guest Sandbox'}
           </div>
           <div className="flex items-center gap-2 text-xs text-zinc-400 hover:text-white cursor-pointer transition">
             <Shield className="h-4 w-4 text-emerald-500" />
@@ -135,7 +137,9 @@ export default function Dashboard() {
               Workspace
             </h3>
             <div className="flex items-center justify-between p-2.5 bg-zinc-900/60 border border-zinc-800 rounded-lg hover:border-zinc-700 transition cursor-pointer">
-              <span className="text-sm font-semibold text-zinc-200">Guest Workspace</span>
+              <span className="text-sm font-semibold text-zinc-200">
+                {user ? `${user.first_name || 'Personal'}'s Workspace` : 'Guest Workspace'}
+              </span>
               <Database className="h-4 w-4 text-zinc-500" />
             </div>
           </div>
@@ -153,15 +157,50 @@ export default function Dashboard() {
               <HelpCircle className="h-8 w-8 text-zinc-600 mb-2" />
               <p className="text-xs text-zinc-400 font-medium">No saved requests yet.</p>
               <p className="text-[10px] text-zinc-600 mt-1 max-w-[160px]">
-                Sign in to save request history, environments, and build collections.
+                Start creating request history, environment variables, and request collections.
               </p>
             </div>
           </div>
 
           <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
-            <button className="w-full py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-indigo-500/10">
-              Sign In to Save
-            </button>
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 p-2 bg-zinc-900/40 border border-zinc-800/80 rounded-xl mb-1">
+                  <div className="h-9 w-9 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 flex-shrink-0">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="User Avatar"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                        {user.first_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-zinc-200 truncate">
+                      {user.first_name} {user.last_name}
+                    </p>
+                    <p className="text-[9px] text-zinc-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="w-full py-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-indigo-500/10"
+              >
+                Sign In to Save
+              </Link>
+            )}
             <Link
               to="/privacy"
               className="text-[10px] text-zinc-500 hover:text-zinc-300 text-center transition py-1 select-none"
