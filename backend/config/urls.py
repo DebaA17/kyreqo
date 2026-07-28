@@ -1,11 +1,18 @@
 from django.contrib import admin
 from django.urls import path, include
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from .views import root_view, health_view
 
 urlpatterns = [
     path('', root_view, name='api_root'),
     path('health/', health_view, name='health_check'),
     path('admin/', admin.site.urls),
+    
+    # OpenAPI Schema & Interactive UI Docs
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
     # API endpoints
     path('api/accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('api/workspaces/', include('apps.workspaces.urls', namespace='workspaces')),
@@ -16,3 +23,4 @@ urlpatterns = [
 ]
 
 handler404 = 'config.views.custom_404_handler'
+
