@@ -7,7 +7,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
   const navigate = useNavigate();
 
@@ -73,7 +73,9 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Email Input */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Email Address</label>
+            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+              Email Address
+            </label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
               <input
@@ -90,7 +92,9 @@ export default function Login() {
           {/* Password Input */}
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Password</label>
+              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                Password
+              </label>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
@@ -125,7 +129,10 @@ export default function Login() {
         {/* Footer Navigation */}
         <div className="mt-8 text-center text-xs text-zinc-500">
           New to the platform?{' '}
-          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-bold transition">
+          <Link
+            to="/register"
+            className="text-indigo-400 hover:text-indigo-300 font-bold transition"
+          >
             Create an Account
           </Link>
         </div>

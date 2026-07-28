@@ -46,11 +46,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     login: async (email, password) => {
       set({ isLoading: true, error: null });
       try {
-        const tokens = await apiClient<{ access: string; refresh: string }>('/api/accounts/login/', {
-          method: 'POST',
-          body: JSON.stringify({ email, password }),
-          skipAuth: true,
-        });
+        const tokens = await apiClient<{ access: string; refresh: string }>(
+          '/api/accounts/login/',
+          {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+            skipAuth: true,
+          }
+        );
 
         localStorage.setItem('accessToken', tokens.access);
         localStorage.setItem('refreshToken', tokens.refresh);
@@ -71,7 +74,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       }
     },
 
-    register: async (data) => {
+    register: async data => {
       set({ isLoading: true, error: null });
       try {
         await apiClient<User>('/api/accounts/register/', {

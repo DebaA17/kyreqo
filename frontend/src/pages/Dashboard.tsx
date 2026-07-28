@@ -168,7 +168,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 p-2 bg-zinc-900/40 border border-zinc-800/80 rounded-xl mb-1">
                   <div className="h-9 w-9 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 flex-shrink-0">
                     {user.avatar ? (
-                      <img src={user.avatar} alt="User Avatar" className="h-full w-full object-cover" />
+                      <img
+                        src={user.avatar}
+                        alt="User Avatar"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <div className="h-full w-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
                         {user.first_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}

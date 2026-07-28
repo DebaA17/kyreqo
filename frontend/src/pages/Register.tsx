@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Send, Mail, Lock, User as UserIcon, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import {
+  Send,
+  Mail,
+  Lock,
+  User as UserIcon,
+  Image as ImageIcon,
+  AlertTriangle,
+} from 'lucide-react';
 
 const PRESET_AVATARS = [
   { name: 'Adventurer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix' },
@@ -100,7 +107,9 @@ export default function Register() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* First Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">First Name</label>
+              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                First Name
+              </label>
               <div className="relative">
                 <UserIcon className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
                 <input
@@ -115,7 +124,9 @@ export default function Register() {
 
             {/* Last Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Last Name</label>
+              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                Last Name
+              </label>
               <div className="relative">
                 <UserIcon className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
                 <input
@@ -131,7 +142,9 @@ export default function Register() {
 
           {/* Email Address */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Email Address *</label>
+            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+              Email Address *
+            </label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
               <input
@@ -148,7 +161,9 @@ export default function Register() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Password *</label>
+              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                Password *
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
                 <input
@@ -164,7 +179,9 @@ export default function Register() {
 
             {/* Confirm Password */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Confirm Password *</label>
+              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                Confirm Password *
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
                 <input
@@ -181,12 +198,14 @@ export default function Register() {
 
           {/* Avatar Picker */}
           <div className="flex flex-col gap-2 mt-1">
-            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">Profile Avatar</label>
-            
+            <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+              Profile Avatar
+            </label>
+
             {/* Presets */}
             <div className="flex gap-3 justify-between items-center bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3">
               <div className="flex gap-2">
-                {PRESET_AVATARS.map((av) => (
+                {PRESET_AVATARS.map(av => (
                   <button
                     key={av.name}
                     type="button"
@@ -198,7 +217,11 @@ export default function Register() {
                       ${avatar === av.url && !customAvatar ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-zinc-800 hover:border-zinc-700'}
                     `}
                   >
-                    <img src={av.url} alt={av.name} className="h-full w-full object-cover rounded" />
+                    <img
+                      src={av.url}
+                      alt={av.name}
+                      className="h-full w-full object-cover rounded"
+                    />
                   </button>
                 ))}
               </div>

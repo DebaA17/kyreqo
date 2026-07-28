@@ -44,9 +44,9 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
           const newAccessToken = data.access;
-          
+
           localStorage.setItem('accessToken', newAccessToken);
-          
+
           // Retry the request with the new access token
           headers.set('Authorization', `Bearer ${newAccessToken}`);
           response = await fetch(url, fetchOptions);
@@ -64,7 +64,8 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.detail || errorData.message || JSON.stringify(errorData) || 'An error occurred';
+    const message =
+      errorData.detail || errorData.message || JSON.stringify(errorData) || 'An error occurred';
     throw new Error(message);
   }
 
