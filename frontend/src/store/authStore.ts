@@ -65,9 +65,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
 
         // Load profile details
         await get().loadProfile();
-      } catch (err: any) {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
         set({
-          error: err.message || 'Login failed. Please check your credentials.',
+          error: message,
           isLoading: false,
         });
         throw err;
@@ -85,9 +86,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
 
         // Log the user in directly after successful registration
         await get().login(data.email, data.password);
-      } catch (err: any) {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Registration failed. Please check your details.';
         set({
-          error: err.message || 'Registration failed. Please check your details.',
+          error: message,
           isLoading: false,
         });
         throw err;
@@ -121,17 +123,18 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           isAuthenticated: true,
           isLoading: false,
         });
-      } catch (err: any) {
+      } catch (err) {
         // If profile fetch fails, clean up credentials
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        const message = err instanceof Error ? err.message : 'Failed to retrieve profile.';
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
-          error: err.message || 'Failed to retrieve profile.',
+          error: message,
         });
       }
     },
