@@ -1,7 +1,10 @@
-from django.urls import path
+from django.urls import path,include
+from rest_framework.routers import DefaultRouter
+from .views import AuthViewSet
 
-app_name = 'accounts'
+router = DefaultRouter()
+router.register(r'auth', AuthViewSet, basename='auth')
 
 urlpatterns = [
-    # Will be populated with register/login/jwt token paths
+    path('', include(router.urls)),
 ]
