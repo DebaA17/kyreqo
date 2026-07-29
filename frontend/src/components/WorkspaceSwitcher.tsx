@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useWorkspaceStore from '../store/workspaceStore';
+import { useAuthStore } from '../store/authStore';
 import { CreateWorkspacePayload } from '../types/workspace';
 
 const WorkspaceSwitcher: React.FC = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -10,6 +13,7 @@ const WorkspaceSwitcher: React.FC = () => {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const { isAuthenticated } = useAuthStore();
   const {
     workspaces,
     currentWorkspaceId,
@@ -22,8 +26,10 @@ const WorkspaceSwitcher: React.FC = () => {
   } = useWorkspaceStore();
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    if (isAuthenticated) {
+      fetchWorkspaces();
+    }
+  }, [fetchWorkspaces, isAuthenticated]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -37,6 +43,20 @@ const WorkspaceSwitcher: React.FC = () => {
   }, []);
 
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-between p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+        <span className="text-zinc-400 text-xs font-semibold">Guest Workspace</span>
+        <button
+          onClick={() => navigate('/login')}
+          className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition"
+        >
+          Sign In
+        </button>
+      </div>
+    );
+  }
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;

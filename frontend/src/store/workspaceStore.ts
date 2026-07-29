@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/client'; // ← Use named import like authStore
+import { apiClient } from '../api/client';
 import { Workspace, CreateWorkspacePayload } from '../types/workspace';
 
 interface WorkspaceStore {
@@ -12,6 +12,7 @@ interface WorkspaceStore {
   createWorkspace: (payload: CreateWorkspacePayload) => Promise<Workspace | null>;
   deleteWorkspace: (id: string) => Promise<void>;
   clearError: () => void;
+  reset: () => void;
 }
 
 const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
@@ -102,6 +103,7 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+  reset: () => set({ workspaces: [], currentWorkspaceId: null, error: null, isLoading: false }),
 }));
 
 export default useWorkspaceStore;
