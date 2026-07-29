@@ -31,9 +31,10 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         currentWorkspaceId:
           get().currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {  // ← Changed here
+      const message = error instanceof Error ? error.message : 'Failed to fetch workspaces';
       set({
-        error: error.message || 'Failed to fetch workspaces',
+        error: message,
         isLoading: false,
       });
     }
@@ -58,14 +59,16 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       }));
 
       return newWorkspace;
-    } catch (error: any) {
+    } catch (error: unknown) {  // ← Changed here
+      const message = error instanceof Error ? error.message : 'Failed to create workspace';
       set({
-        error: error.message || 'Failed to create workspace',
+        error: message,
         isLoading: false,
       });
       return null;
     }
   },
+
 
   deleteWorkspace: async (id: string) => {
     set({ isLoading: true, error: null });
@@ -87,9 +90,10 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
           isLoading: false,
         };
       });
-    } catch (error: any) {
+    } catch (error: unknown) {  // ← Changed here
+      const message = error instanceof Error ? error.message : 'Failed to delete workspace';
       set({
-        error: error.message || 'Failed to delete workspace',
+        error: message,
         isLoading: false,
       });
     }
