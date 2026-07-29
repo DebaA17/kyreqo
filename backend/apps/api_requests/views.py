@@ -2,10 +2,14 @@ import socket
 import urllib.parse
 import ipaddress
 import requests
+from django.db import models
+from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import AllowAny
+from apps.collections.models import CollectionRequest
+from apps.collections.serializers import CollectionRequestSerializer
+from apps.collections.permissions import IsWorkspaceMemberForRequest
 
 def is_safe_url(url_str):
     """
@@ -103,3 +107,21 @@ class ProxyRequestView(APIView):
                 {"error": f"Failed to execute target request: {str(e)}"},
                 status=status.HTTP_502_BAD_GATEWAY
             )
+
+
+class CollectionRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = CollectionRequestSerializer
+    permission_classes = [permissions.IsAuthenticated, IsWorkspaceMemberForRequest]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = CollectionRequest.objects.filter(
+            models.Q(collection__workspace__owner=user) | 
+            models.Q(collection__workspace__memberships__user=user)
+        ).distinct()
+
+        collection_id = self.request.query_params.get('collection')
+        if collection_id:
+            queryset = queryset.filter(collection_id=collection_id)
+
+        return queryset
