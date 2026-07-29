@@ -11,10 +11,13 @@ from apps.collections.models import CollectionRequest
 from apps.collections.serializers import CollectionRequestSerializer
 from apps.collections.permissions import IsWorkspaceMemberForRequest
 
+from django.conf import settings
+
 def is_safe_url(url_str):
     """
     Validates that a URL does not point to a loopback, private, or reserved IP address
     to safeguard against Server-Side Request Forgery (SSRF).
+    Allows loopback/private IPs in DEBUG mode for local development/testing.
     """
     try:
         parsed_url = urllib.parse.urlparse(url_str)
@@ -29,6 +32,10 @@ def is_safe_url(url_str):
         ip_str = socket.gethostbyname(host)
         ip = ipaddress.ip_address(ip_str)
         
+        # Allow private / loopback IPs in debug mode
+        if settings.DEBUG:
+            return True
+
         # Check against private / loopback / link-local addresses
         if (ip.is_private or 
             ip.is_loopback or 
