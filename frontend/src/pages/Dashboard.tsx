@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Play, Terminal, HelpCircle, Shield, Database } from 'lucide-react';
+import { Send, Play, Terminal, HelpCircle, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import  WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 
 interface RequestHeader {
   key: string;
@@ -136,12 +137,7 @@ export default function Dashboard() {
             <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase mb-2">
               Workspace
             </h3>
-            <div className="flex items-center justify-between p-2.5 bg-zinc-900/60 border border-zinc-800 rounded-lg hover:border-zinc-700 transition cursor-pointer">
-              <span className="text-sm font-semibold text-zinc-200">
-                {user ? `${user.first_name || 'Personal'}'s Workspace` : 'Guest Workspace'}
-              </span>
-              <Database className="h-4 w-4 text-zinc-500" />
-            </div>
+            <WorkspaceSwitcher />
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
