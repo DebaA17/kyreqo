@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, AuthState } from '../types/auth';
 import { apiClient } from '../api/client';
+import useWorkspaceStore from './workspaceStore';
 
 interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
   // Listen for global auth failure from apiClient
   if (typeof window !== 'undefined') {
     window.addEventListener('auth-logout', () => {
+      useWorkspaceStore.getState().reset();
       set({
         user: null,
         accessToken: null,
@@ -101,6 +103,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     logout: () => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      useWorkspaceStore.getState().reset();
       set({
         user: null,
         accessToken: null,
@@ -129,6 +132,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         // If profile fetch fails, clean up credentials
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        useWorkspaceStore.getState().reset();
         const message = err instanceof Error ? err.message : 'Failed to retrieve profile.';
         set({
           user: null,
