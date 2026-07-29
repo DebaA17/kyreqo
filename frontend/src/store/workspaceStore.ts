@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/client';  // ← Use named import like authStore
+import { apiClient } from '../api/client'; // ← Use named import like authStore
 import { Workspace, CreateWorkspacePayload } from '../types/workspace';
 
 interface WorkspaceStore {
@@ -24,16 +24,17 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const workspaces = await apiClient<Workspace[]>('/api/workspaces/');
-      
-      set({ 
-        workspaces, 
+
+      set({
+        workspaces,
         isLoading: false,
-        currentWorkspaceId: get().currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null)
+        currentWorkspaceId:
+          get().currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null),
       });
     } catch (error: any) {
-      set({ 
+      set({
         error: error.message || 'Failed to fetch workspaces',
-        isLoading: false 
+        isLoading: false,
       });
     }
   },
@@ -49,18 +50,18 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      
-      set((state) => ({
+
+      set(state => ({
         workspaces: [newWorkspace, ...state.workspaces],
         currentWorkspaceId: newWorkspace.id,
-        isLoading: false
+        isLoading: false,
       }));
-      
+
       return newWorkspace;
     } catch (error: any) {
-      set({ 
+      set({
         error: error.message || 'Failed to create workspace',
-        isLoading: false 
+        isLoading: false,
       });
       return null;
     }
@@ -72,26 +73,29 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       await apiClient(`/api/workspaces/${id}/`, {
         method: 'DELETE',
       });
-      
-      set((state) => {
+
+      set(state => {
         const remainingWorkspaces = state.workspaces.filter(w => w.id !== id);
         return {
           workspaces: remainingWorkspaces,
-          currentWorkspaceId: state.currentWorkspaceId === id 
-            ? (remainingWorkspaces.length > 0 ? remainingWorkspaces[0].id : null)
-            : state.currentWorkspaceId,
-          isLoading: false
+          currentWorkspaceId:
+            state.currentWorkspaceId === id
+              ? remainingWorkspaces.length > 0
+                ? remainingWorkspaces[0].id
+                : null
+              : state.currentWorkspaceId,
+          isLoading: false,
         };
       });
     } catch (error: any) {
-      set({ 
+      set({
         error: error.message || 'Failed to delete workspace',
-        isLoading: false 
+        isLoading: false,
       });
     }
   },
 
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null }),
 }));
 
 export default useWorkspaceStore;

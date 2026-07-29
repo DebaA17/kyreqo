@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Play, Terminal, HelpCircle, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import  WorkspaceSwitcher from '../components/WorkspaceSwitcher';
+import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 
 interface RequestHeader {
   key: string;
