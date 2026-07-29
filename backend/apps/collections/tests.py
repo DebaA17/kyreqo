@@ -190,3 +190,45 @@ class CollectionTests(APITestCase):
         response = self.client.delete(detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(CollectionRequest.objects.count(), 0)
+
+    def test_nested_collections_and_validation(self):
+        url = reverse("collections:collection-list")
+        self.client.force_authenticate(user=self.owner)
+
+        # 1. Create a valid child collection
+        data = {
+            "name": "Nested Auth Subfolder",
+            "workspace": self.workspace.id,
+            "parent_collection": self.collection.id
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        child_id = response.data["id"]
+        self.assertEqual(response.data["parent_collection"], self.collection.id)
+
+        # 2. Verify recursive child representation in serializer
+        retrieve_url = reverse("collections:collection-detail", args=[self.collection.id])
+        response = self.client.get(retrieve_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["child_collections"]), 1)
+        self.assertEqual(response.data["child_collections"][0]["name"], "Nested Auth Subfolder")
+
+        # 3. Create workspace 2 and try to link parent across workspaces
+        workspace2 = Workspace.objects.create(
+            name="Workspace Two",
+            owner=self.owner
+        )
+        data2 = {
+            "name": "Cross-Workspace Folder",
+            "workspace": workspace2.id,
+            "parent_collection": self.collection.id  # Mismatched workspace!
+        }
+        response = self.client.post(url, data2, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("parent_collection", response.data)
+
+        # 4. Self-referential update validation
+        child_detail_url = reverse("collections:collection-detail", args=[child_id])
+        response = self.client.patch(child_detail_url, {"parent_collection": child_id}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("parent_collection", response.data)

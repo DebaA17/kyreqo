@@ -37,14 +37,20 @@ class CollectionRequestSerializer(serializers.ModelSerializer):
 
 class CollectionSerializer(serializers.ModelSerializer):
     requests = CollectionRequestSerializer(many=True, read_only=True)
+    child_collections = serializers.SerializerMethodField()
 
     class Meta:
         model = Collection
         fields = [
-            'id', 'workspace', 'name', 'description', 'requests',
-            'created_at', 'updated_at'
+            'id', 'workspace', 'parent_collection', 'name', 'description',
+            'requests', 'child_collections', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_child_collections(self, obj):
+        # Recursively serialize child collections
+        children = obj.child_collections.all()
+        return CollectionSerializer(children, many=True, context=self.context).data
 
     def validate_workspace(self, value):
         request = self.context.get('request')
@@ -66,3 +72,25 @@ class CollectionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Viewer members cannot create or modify collections.")
 
         return value
+
+    def validate(self, attrs):
+        parent = attrs.get('parent_collection')
+        workspace = attrs.get('workspace')
+
+        # Retrieve workspace from instance if not provided in PATCH request
+        if not workspace and self.instance:
+            workspace = self.instance.workspace
+
+        if parent:
+            # Check parent collection is in the same workspace
+            if parent.workspace != workspace:
+                raise serializers.ValidationError({
+                    "parent_collection": "Parent collection must belong to the same workspace."
+                })
+            
+            # Avoid self-referential cycles
+            if self.instance and parent.id == self.instance.id:
+                raise serializers.ValidationError({
+                    "parent_collection": "A collection cannot be its own parent."
+                })
+        return attrs

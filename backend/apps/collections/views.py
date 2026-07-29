@@ -19,4 +19,12 @@ class CollectionViewSet(viewsets.ModelViewSet):
         if workspace_id:
             queryset = queryset.filter(workspace_id=workspace_id)
             
+        # Support parent_collection filtering (e.g. parent_collection=null to list root elements)
+        if 'parent_collection' in self.request.query_params:
+            parent_collection = self.request.query_params.get('parent_collection')
+            if parent_collection in ('null', 'None', ''):
+                queryset = queryset.filter(parent_collection__isnull=True)
+            else:
+                queryset = queryset.filter(parent_collection_id=parent_collection)
+
         return queryset

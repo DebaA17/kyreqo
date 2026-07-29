@@ -7,6 +7,13 @@ class Collection(models.Model):
         on_delete=models.CASCADE,
         related_name='collections'
     )
+    parent_collection = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='child_collections',
+        blank=True,
+        null=True
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
