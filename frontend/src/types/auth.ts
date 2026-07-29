@@ -5,6 +5,8 @@ export interface User {
   last_name: string;
   avatar: string | null;
   date_joined: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
 }
 
 export interface AuthState {

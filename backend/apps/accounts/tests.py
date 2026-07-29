@@ -89,3 +89,71 @@ class AccountsAPITests(APITestCase):
         response = self.client.post(self.refresh_url, {"refresh": refresh_token}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
+
+    def test_login_attempts_logging(self):
+        user = User.objects.create_user(
+            email=self.user_data['email'],
+            password=self.user_data['password']
+        )
+        
+        # 1. Successful login logging
+        login_data = {
+            "email": self.user_data['email'],
+            "password": self.user_data['password']
+        }
+        response = self.client.post(self.login_url, login_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify a successful log was created
+        from .models import LoginAttempt
+        self.assertEqual(LoginAttempt.objects.count(), 1)
+        log = LoginAttempt.objects.first()
+        self.assertEqual(log.email, self.user_data['email'])
+        self.assertEqual(log.user, user)
+        self.assertTrue(log.is_successful)
+
+        # 2. Failed login logging
+        login_data_bad = {
+            "email": self.user_data['email'],
+            "password": "WrongPassword!"  # nosec B105
+        }
+        response = self.client.post(self.login_url, login_data_bad, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+        # Verify a failed log was created
+        self.assertEqual(LoginAttempt.objects.count(), 2)
+        log_failed = LoginAttempt.objects.order_by('-timestamp').first()
+        self.assertEqual(log_failed.email, self.user_data['email'])
+        self.assertFalse(log_failed.is_successful)
+
+    def test_admin_endpoints_permissions(self):
+        # Create normal user & admin user
+        normal_user = User.objects.create_user(
+            email="normal@example.com",
+            password="password123"  # nosec B106
+        )
+        admin_user = User.objects.create_superuser(
+            email="admin@example.com",
+            password="password123"  # nosec B106
+        )
+
+        admin_users_url = reverse('accounts:admin_users')
+        admin_logs_url = reverse('accounts:admin_login_logs')
+
+        # 1. Normal user is forbidden
+        self.client.force_authenticate(user=normal_user)
+        response = self.client.get(admin_users_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        response = self.client.get(admin_logs_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # 2. Admin user is allowed
+        self.client.force_authenticate(user=admin_user)
+        response = self.client.get(admin_users_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 2)  # Normal + Admin
+
+        response = self.client.get(admin_logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
