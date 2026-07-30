@@ -15,8 +15,8 @@ class AccountsAPITests(APITestCase):
         
         self.user_data = {
             "email": "test@example.com",
-            "password": "StrongPassword123!",  # nosec B105
-            "password_confirm": "StrongPassword123!",  # nosec B105,
+            "password": "StrongPassword123!",  
+            "password_confirm": "StrongPassword123!",  
             "first_name": "Test",
             "last_name": "User"
         }
@@ -27,24 +27,24 @@ class AccountsAPITests(APITestCase):
         self.assertEqual(response.data['email'], self.user_data['email'])
         self.assertNotIn('password', response.data)
         
-        # Verify user actually created in database
+        
         self.assertTrue(User.objects.filter(email=self.user_data['email']).exists())
 
     def test_user_registration_password_mismatch(self):
         data = self.user_data.copy()
-        data['password_confirm'] = 'DifferentPassword123!'  # nosec B105
+        data['password_confirm'] = 'DifferentPassword123!'  
         response = self.client.post(self.register_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data or {})
 
     def test_user_login_success(self):
-        # First register a user
+        
         User.objects.create_user(
             email=self.user_data['email'],
             password=self.user_data['password']
         )
         
-        # Attempt login
+        
         login_data = {
             "email": self.user_data['email'],
             "password": self.user_data['password']
@@ -60,7 +60,7 @@ class AccountsAPITests(APITestCase):
             password=self.user_data['password']
         )
         
-        # Authenticate user directly
+        
         self.client.force_authenticate(user=user)
         
         response = self.client.get(self.me_url)
@@ -77,7 +77,7 @@ class AccountsAPITests(APITestCase):
             password=self.user_data['password']
         )
         
-        # Login to get refresh token
+        
         login_data = {
             "email": self.user_data['email'],
             "password": self.user_data['password']
@@ -85,7 +85,7 @@ class AccountsAPITests(APITestCase):
         login_response = self.client.post(self.login_url, login_data, format='json')
         refresh_token = login_response.data['refresh']
         
-        # Refresh token
+        
         response = self.client.post(self.refresh_url, {"refresh": refresh_token}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
@@ -96,7 +96,7 @@ class AccountsAPITests(APITestCase):
             password=self.user_data['password']
         )
         
-        # 1. Successful login logging
+        
         login_data = {
             "email": self.user_data['email'],
             "password": self.user_data['password']
@@ -104,7 +104,7 @@ class AccountsAPITests(APITestCase):
         response = self.client.post(self.login_url, login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Verify a successful log was created
+        
         from .models import LoginAttempt
         self.assertEqual(LoginAttempt.objects.count(), 1)
         log = LoginAttempt.objects.first()
@@ -112,35 +112,35 @@ class AccountsAPITests(APITestCase):
         self.assertEqual(log.user, user)
         self.assertTrue(log.is_successful)
 
-        # 2. Failed login logging
+        
         login_data_bad = {
             "email": self.user_data['email'],
-            "password": "WrongPassword!"  # nosec B105
+            "password": "WrongPassword!"  
         }
         response = self.client.post(self.login_url, login_data_bad, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
-        # Verify a failed log was created
+        
         self.assertEqual(LoginAttempt.objects.count(), 2)
         log_failed = LoginAttempt.objects.order_by('-timestamp').first()
         self.assertEqual(log_failed.email, self.user_data['email'])
         self.assertFalse(log_failed.is_successful)
 
     def test_admin_endpoints_permissions(self):
-        # Create normal user & admin user
+        
         normal_user = User.objects.create_user(
             email="normal@example.com",
-            password="password123"  # nosec B106
+            password="password123"  
         )
         admin_user = User.objects.create_superuser(
             email="admin@example.com",
-            password="password123"  # nosec B106
+            password="password123"  
         )
 
         admin_users_url = reverse('accounts:admin_users')
         admin_logs_url = reverse('accounts:admin_login_logs')
 
-        # 1. Normal user is forbidden
+        
         self.client.force_authenticate(user=normal_user)
         response = self.client.get(admin_users_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -148,11 +148,11 @@ class AccountsAPITests(APITestCase):
         response = self.client.get(admin_logs_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # 2. Admin user is allowed
+        
         self.client.force_authenticate(user=admin_user)
         response = self.client.get(admin_users_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 2)  # Normal + Admin
+        self.assertGreaterEqual(len(response.data), 2)  
 
         response = self.client.get(admin_logs_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

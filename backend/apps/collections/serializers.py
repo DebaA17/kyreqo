@@ -21,14 +21,14 @@ class CollectionRequestSerializer(serializers.ModelSerializer):
         workspace = value.workspace
         is_owner = workspace.owner == user
         
-        # Get user role in the workspace
+        
         membership = workspace.memberships.filter(user=user).first()
         is_member = membership is not None
 
         if not (is_owner or is_member):
             raise serializers.ValidationError("You do not have permission to access this collection's workspace.")
 
-        # Ensure role permits modifications
+        
         if not is_owner and membership.role == 'viewer':
             raise serializers.ValidationError("Viewer members cannot create or modify requests.")
 
@@ -48,7 +48,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_child_collections(self, obj):
-        # Recursively serialize child collections
+        
         children = obj.child_collections.all()
         return CollectionSerializer(children, many=True, context=self.context).data
 
@@ -60,14 +60,14 @@ class CollectionSerializer(serializers.ModelSerializer):
         user = request.user
         is_owner = value.owner == user
         
-        # Get user role in the workspace
+        
         membership = value.memberships.filter(user=user).first()
         is_member = membership is not None
 
         if not (is_owner or is_member):
             raise serializers.ValidationError("You do not have permission to access this workspace.")
 
-        # Ensure role permits modifications
+        
         if not is_owner and membership.role == 'viewer':
             raise serializers.ValidationError("Viewer members cannot create or modify collections.")
 
@@ -77,18 +77,18 @@ class CollectionSerializer(serializers.ModelSerializer):
         parent = attrs.get('parent_collection')
         workspace = attrs.get('workspace')
 
-        # Retrieve workspace from instance if not provided in PATCH request
+        
         if not workspace and self.instance:
             workspace = self.instance.workspace
 
         if parent:
-            # Check parent collection is in the same workspace
+            
             if parent.workspace != workspace:
                 raise serializers.ValidationError({
                     "parent_collection": "Parent collection must belong to the same workspace."
                 })
             
-            # Avoid self-referential cycles
+            
             if self.instance and parent.id == self.instance.id:
                 raise serializers.ValidationError({
                     "parent_collection": "A collection cannot be its own parent."

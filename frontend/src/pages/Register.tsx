@@ -30,13 +30,11 @@ export default function Register() {
   const { register, isLoading, error, isAuthenticated, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  // Clear errors on mount
   useEffect(() => {
     clearError();
     setValidationError(null);
   }, [clearError]);
 
-  // If already authenticated, redirect to home
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/', { replace: true });
@@ -70,18 +68,18 @@ export default function Register() {
       });
       navigate('/', { replace: true });
     } catch (err) {
-      // Error handled by store
+      void err;
     }
   };
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-y-auto relative py-12">
-      {/* Background Decorative Glows */}
+      {}
       <div className="absolute top-1/4 left-1/4 h-[350px] w-[350px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 h-[350px] w-[350px] bg-violet-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="w-full max-w-xl p-8 bg-[#0c0c10] border border-[#1f1f29] rounded-2xl shadow-2xl relative z-10 my-auto">
-        {/* Brand Logo */}
+        {}
         <div className="flex flex-col items-center mb-6 select-none">
           <div className="h-12 w-12 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-3">
             <Send className="h-6 w-6 text-white transform -rotate-45" />
@@ -92,7 +90,7 @@ export default function Register() {
           <p className="text-xs text-zinc-500 font-medium mt-1">START YOUR DEVSANDBOX TODAY</p>
         </div>
 
-        {/* Display Error Message */}
+        {}
         {(error || validationError) && (
           <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-400 text-xs leading-relaxed">
             <AlertTriangle className="h-5 w-5 flex-shrink-0" />
@@ -105,7 +103,7 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name */}
+            {}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
                 First Name
@@ -122,7 +120,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Last Name */}
+            {}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
                 Last Name
@@ -140,7 +138,7 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Email Address */}
+          {}
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
               Email Address *
@@ -159,7 +157,7 @@ export default function Register() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Password */}
+            {}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
                 Password *
@@ -177,7 +175,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Confirm Password */}
+            {}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
                 Confirm Password *
@@ -196,13 +194,13 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Avatar Picker */}
+          {}
           <div className="flex flex-col gap-2 mt-1">
             <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
               Profile Avatar
             </label>
 
-            {/* Presets */}
+            {}
             <div className="flex gap-3 justify-between items-center bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3">
               <div className="flex gap-2">
                 {PRESET_AVATARS.map(av => (
@@ -228,7 +226,7 @@ export default function Register() {
               <div className="text-[10px] text-zinc-500 font-medium select-none">PICK A PRESET</div>
             </div>
 
-            {/* Custom URL Option */}
+            {}
             <div className="relative mt-1">
               <ImageIcon className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
               <input
@@ -241,7 +239,7 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Register Button */}
+          {}
           <button
             type="submit"
             disabled={isLoading}
@@ -258,7 +256,7 @@ export default function Register() {
           </button>
         </form>
 
-        {/* Footer Navigation */}
+        {}
         <div className="mt-6 text-center text-xs text-zinc-500">
           Already have an account?{' '}
           <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-bold transition">

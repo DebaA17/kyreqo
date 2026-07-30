@@ -25,7 +25,6 @@ const getInitialState = (): AuthState => {
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
-  // Listen for global auth failure from apiClient
   if (typeof window !== 'undefined') {
     window.addEventListener('auth-logout', () => {
       useWorkspaceStore.getState().reset();
@@ -65,7 +64,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           refreshToken: tokens.refresh,
         });
 
-        // Load profile details
         await get().loadProfile();
       } catch (err) {
         const message =
@@ -87,7 +85,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           skipAuth: true,
         });
 
-        // Log the user in directly after successful registration
         await get().login(data.email, data.password);
       } catch (err) {
         const message =
@@ -129,7 +126,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           isLoading: false,
         });
       } catch (err) {
-        // If profile fetch fails, clean up credentials
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         useWorkspaceStore.getState().reset();

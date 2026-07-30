@@ -10,7 +10,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, loadProfile, accessToken } = useAuthStore();
 
   useEffect(() => {
-    // If we have an access token but no user, try to load profile
     if (accessToken && !isAuthenticated) {
       loadProfile();
     }

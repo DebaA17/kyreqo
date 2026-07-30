@@ -11,13 +11,11 @@ export default function Login() {
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  // Clear errors on mount
   useEffect(() => {
     clearError();
     setValidationError(null);
   }, [clearError]);
 
-  // If already authenticated, redirect to home
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/', { replace: true });
@@ -37,18 +35,18 @@ export default function Login() {
       await login(email, password);
       navigate('/', { replace: true });
     } catch (err) {
-      // Error handled by store
+      void err;
     }
   };
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden relative">
-      {/* Background Decorative Glows */}
+      {}
       <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 h-[300px] w-[300px] bg-violet-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="w-full max-w-md p-8 bg-[#0c0c10] border border-[#1f1f29] rounded-2xl shadow-2xl relative z-10">
-        {/* Brand Logo */}
+        {}
         <div className="flex flex-col items-center mb-8 select-none">
           <div className="h-12 w-12 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-3">
             <Send className="h-6 w-6 text-white transform -rotate-45" />
@@ -59,7 +57,7 @@ export default function Login() {
           <p className="text-xs text-zinc-500 font-medium mt-1">SIGN IN TO ACCESS YOUR SANDBOX</p>
         </div>
 
-        {/* Display Error Message */}
+        {}
         {(error || validationError) && (
           <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-400 text-xs leading-relaxed">
             <AlertTriangle className="h-5 w-5 flex-shrink-0" />
@@ -71,7 +69,7 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Email Input */}
+          {}
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
               Email Address
@@ -89,7 +87,7 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Password Input */}
+          {}
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
@@ -109,7 +107,7 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {}
           <button
             type="submit"
             disabled={isLoading}
@@ -126,7 +124,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Footer Navigation */}
+        {}
         <div className="mt-8 text-center text-xs text-zinc-500">
           New to the platform?{' '}
           <Link

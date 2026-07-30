@@ -51,11 +51,9 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters state
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive' | 'staff'>('all');
   const [logFilter, setLogFilter] = useState<'all' | 'success' | 'failed'>('all');
 
-  // Security guard check
   useEffect(() => {
     if (!accessToken) {
       navigate('/');
@@ -99,7 +97,6 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, user]);
 
-  // Compute filtered results
   const filteredUsers = usersList.filter(usr => {
     if (userFilter === 'active') return usr.is_active;
     if (userFilter === 'inactive') return !usr.is_active;
@@ -126,7 +123,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-indigo-500/30">
-      {/* Background gradients */}
+      {}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -183,7 +180,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Dashboard summary stats cards */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl backdrop-blur-sm">
             <div className="flex justify-between items-center mb-4">
@@ -221,7 +218,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tabs switcher */}
+        {}
         <div className="flex border-b border-zinc-800 mb-6">
           <button
             onClick={() => setActiveTab('users')}
@@ -245,7 +242,7 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Filters */}
+        {}
         <div className="flex justify-between items-center mb-6 bg-zinc-900/20 p-4 rounded-xl border border-zinc-800/60 backdrop-blur-sm">
           <div className="text-xs text-zinc-400 font-medium">
             Showing {activeTab === 'users' ? filteredUsers.length : filteredLogs.length} of{' '}
@@ -283,7 +280,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Content lists */}
+        {}
         {activeTab === 'users' ? (
           <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden backdrop-blur-sm">
             <div className="overflow-x-auto">

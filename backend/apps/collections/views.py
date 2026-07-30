@@ -14,12 +14,12 @@ class CollectionViewSet(viewsets.ModelViewSet):
             models.Q(workspace__owner=user) | models.Q(workspace__memberships__user=user)
         ).distinct()
         
-        # Support workspace-specific collection filtering
+        
         workspace_id = self.request.query_params.get('workspace')
         if workspace_id:
             queryset = queryset.filter(workspace_id=workspace_id)
             
-        # Support parent_collection filtering (e.g. parent_collection=null to list root elements)
+        
         if 'parent_collection' in self.request.query_params:
             parent_collection = self.request.query_params.get('parent_collection')
             if parent_collection in ('null', 'None', ''):

@@ -14,7 +14,7 @@ class IsWorkspaceMemberForCollection(permissions.BasePermission):
         workspace = obj.workspace
         is_owner = workspace.owner == request.user
 
-        # Get membership role
+        
         membership = workspace.memberships.filter(user=request.user).first()
         is_member = membership is not None
 
@@ -24,7 +24,7 @@ class IsWorkspaceMemberForCollection(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Non-safe methods (write operations) require owner or role in (admin, editor)
+        
         return is_owner or membership.role in ('admin', 'editor')
 
 
@@ -39,7 +39,7 @@ class IsWorkspaceMemberForRequest(permissions.BasePermission):
         workspace = obj.collection.workspace
         is_owner = workspace.owner == request.user
 
-        # Get membership role
+        
         membership = workspace.memberships.filter(user=request.user).first()
         is_member = membership is not None
 
@@ -49,5 +49,5 @@ class IsWorkspaceMemberForRequest(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Non-safe methods require owner or role in (admin, editor)
+        
         return is_owner or membership.role in ('admin', 'editor')

@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Play, Terminal, HelpCircle, Shield } from 'lucide-react';
+import { Send, Play, Terminal, HelpCircle, Shield, Folder } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
+import CollectionsExplorer from '../components/CollectionsExplorer';
+import useWorkspaceStore from '../store/workspaceStore';
+import useCollectionStore from '../store/collectionStore';
+import { apiClient } from '../api/client';
 
 interface RequestHeader {
   key: string;
@@ -11,6 +15,8 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const { currentWorkspaceId } = useWorkspaceStore();
+  const { collections, fetchCollections } = useCollectionStore();
   const { user, logout } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
@@ -24,6 +30,42 @@ export default function Dashboard() {
   const [statusInfo, setStatusInfo] = useState<{ code: number; time: number; size: number } | null>(
     null
   );
+
+  const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
+  const [saveRequestName, setSaveRequestName] = useState('');
+  const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
+
+  const handleSaveRequest = async () => {
+    if (!saveRequestName.trim() || !saveCollectionId) return;
+
+    try {
+      const reqHeaders: Record<string, string> = {};
+      headers.forEach(h => {
+        if (h.enabled && h.key) reqHeaders[h.key] = h.value;
+      });
+
+      await apiClient('/api/requests/', {
+        method: 'POST',
+        body: JSON.stringify({
+          collection: saveCollectionId,
+          name: saveRequestName.trim(),
+          url,
+          method,
+          headers: reqHeaders,
+          query_params: {},
+          body: body || '',
+        }),
+      });
+      setShowSaveRequestModal(false);
+      setSaveRequestName('');
+      setSaveCollectionId('');
+      if (currentWorkspaceId) {
+        fetchCollections(currentWorkspaceId);
+      }
+    } catch (err) {
+      alert('Failed to save request.');
+    }
+  };
 
   const addHeader = () => {
     setHeaders([...headers, { key: '', value: '', enabled: true }]);
@@ -103,7 +145,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden">
-      {/* Header Bar */}
+      {}
       <header className="flex items-center justify-between px-6 py-4 bg-[#0d0d11] border-b border-[#1f1f29] shadow-sm select-none">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -129,9 +171,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Area */}
+      {}
       <main className="flex-1 flex overflow-hidden">
-        {/* Left Mini Sidebar */}
+        {}
         <aside className="w-64 bg-[#0c0c10] border-r border-[#1f1f29] p-4 flex flex-col gap-4">
           <div>
             <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase mb-2">
@@ -141,21 +183,27 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase">
-                Saved Collections
-              </h3>
-              <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
-                0 / 0
-              </span>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-xl p-4 text-center">
-              <HelpCircle className="h-8 w-8 text-zinc-600 mb-2" />
-              <p className="text-xs text-zinc-400 font-medium">No saved requests yet.</p>
-              <p className="text-[10px] text-zinc-600 mt-1 max-w-[160px]">
-                Start creating request history, environment variables, and request collections.
-              </p>
-            </div>
+            <CollectionsExplorer
+              workspaceId={currentWorkspaceId || ''}
+              onSelectRequest={req => {
+                setUrl(req.url);
+                setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
+                const reqHeaders: RequestHeader[] = Object.entries(req.headers || {}).map(
+                  ([key, value]) => ({
+                    key,
+                    value: String(value),
+                    enabled: true,
+                  })
+                );
+                if (reqHeaders.length === 0) {
+                  reqHeaders.push({ key: '', value: '', enabled: true });
+                }
+                setHeaders(reqHeaders);
+                setBody(
+                  typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2) || ''
+                );
+              }}
+            />
           </div>
 
           <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
@@ -214,11 +262,11 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* Center Panel (Request Builder & Response Panel) */}
+        {}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Request Header Builder */}
+          {}
           <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
-            {/* Action Bar */}
+            {}
             <div className="flex gap-2">
               <select
                 value={method}
@@ -266,9 +314,24 @@ export default function Dashboard() {
                   </>
                 )}
               </button>
+
+              {user && (
+                <button
+                  onClick={() => {
+                    if (collections.length > 0) {
+                      setSaveCollectionId(collections[0].id);
+                    }
+                    setShowSaveRequestModal(true);
+                  }}
+                  className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition"
+                >
+                  <Folder className="h-4 w-4" />
+                  Save
+                </button>
+              )}
             </div>
 
-            {/* Request tabs */}
+            {}
             <div className="flex border-b border-zinc-800 text-xs">
               <button
                 onClick={() => setActiveTab('headers')}
@@ -291,9 +354,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* tab content + response output split */}
+          {}
           <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-[#08080b]">
-            {/* Left side of split: Request Data input */}
+            {}
             <div className="flex-1 border-r border-[#1f1f29] p-4 flex flex-col min-h-0 min-w-0">
               {activeTab === 'headers' && (
                 <div className="flex-1 flex flex-col min-h-0 gap-2">
@@ -357,7 +420,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Right side of split: Response output */}
+            {}
             <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
               <div className="flex items-center justify-between mb-3 gap-2">
                 <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
@@ -407,6 +470,68 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {}
+      {showSaveRequestModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-medium text-white mb-4">Save Active Request</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">Request Name *</label>
+                <input
+                  type="text"
+                  value={saveRequestName}
+                  onChange={e => setSaveRequestName(e.target.value)}
+                  placeholder="e.g. Fetch Users List"
+                  className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
+                  onKeyPress={e => e.key === 'Enter' && handleSaveRequest()}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">Collection Folder *</label>
+                <select
+                  value={saveCollectionId}
+                  onChange={e => setSaveCollectionId(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
+                >
+                  <option value="" disabled>
+                    Select a folder
+                  </option>
+                  {collections.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
+                onClick={() => {
+                  setShowSaveRequestModal(false);
+                  setSaveRequestName('');
+                  setSaveCollectionId('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition disabled:opacity-50"
+                onClick={handleSaveRequest}
+                disabled={!saveRequestName.trim() || !saveCollectionId}
+              >
+                Save Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

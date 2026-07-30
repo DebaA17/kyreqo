@@ -6,11 +6,11 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="flex flex-col min-h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-y-auto relative py-12 px-6">
-      {/* Background radial glow */}
+      {}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-3xl mx-auto z-10 w-full">
-        {/* Header navigation */}
+        {}
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 text-xs text-zinc-400 hover:text-zinc-100 transition mb-8 group"
@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
           Back to Playground
         </button>
 
-        {/* Title */}
+        {}
         <div className="flex items-center gap-3 mb-4">
           <div className="h-10 w-10 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center">
             <FileText className="h-5 w-5 text-indigo-400" />
@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
         </div>
         <p className="text-xs text-zinc-500 mb-8">Last Updated: July 27, 2026</p>
 
-        {/* Introduction */}
+        {}
         <div className="p-4 bg-zinc-950/40 border border-zinc-900 rounded-xl mb-8">
           <p className="text-sm text-zinc-300 leading-relaxed">
             Kyreqo is built with a security-first architecture. This Privacy Policy details how we
@@ -39,9 +39,9 @@ export default function PrivacyPolicy() {
           </p>
         </div>
 
-        {/* Core Sections */}
+        {}
         <div className="space-y-8">
-          {/* Section 1 */}
+          {}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Eye className="h-4 w-4 text-indigo-400" />
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 2 */}
+          {}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Shield className="h-4 w-4 text-emerald-400" />
@@ -76,7 +76,7 @@ export default function PrivacyPolicy() {
             </p>
           </section>
 
-          {/* Section 3 */}
+          {}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Lock className="h-4 w-4 text-violet-400" />
@@ -96,7 +96,7 @@ export default function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 4 */}
+          {}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100">4. Contact Information</h2>
             <p className="pl-6 text-sm text-zinc-400 leading-relaxed">
@@ -106,7 +106,7 @@ export default function PrivacyPolicy() {
           </section>
         </div>
 
-        {/* Footer info */}
+        {}
         <div className="mt-12 pt-6 border-t border-zinc-900 text-center">
           <p className="text-[10px] text-zinc-600">
             &copy; 2026 Kyreqo. Designed for secure, sandboxed API workspace management.

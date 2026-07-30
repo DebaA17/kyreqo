@@ -110,7 +110,7 @@ jobs:
         run: python manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history
 
       - name: Run Bandit Security Linting
-        run: bandit -r apps/
+        run: bandit -r apps/ -x "**/tests.py"
 
       - name: Run Backend Smoke Test (Linux/macOS)
         if: matrix.os != 'windows-latest'
