@@ -33,7 +33,6 @@ export default function Turnstile({ sitekey, onVerify }: TurnstileProps) {
     const initialize = () => {
       if (window.turnstile && containerRef.current) {
         try {
-          // Clear container to prevent duplicate elements in StrictMode
           containerRef.current.innerHTML = '';
 
           widgetId = window.turnstile.render(containerRef.current, {
