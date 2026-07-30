@@ -11,13 +11,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv.load_dotenv(BASE_DIR / '.env')
 
 
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+
 from django.core.management.utils import get_random_secret_key
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     if not DEBUG:
         raise ValueError("DJANGO_SECRET_KEY must be set in environment variables when DEBUG=False")
     SECRET_KEY = get_random_secret_key()
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
