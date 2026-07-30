@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
-  const [saveCollectionId, setSaveCollectionId] = useState('');
+  const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
 
   const handleSaveRequest = async () => {
     if (!saveRequestName.trim() || !saveCollectionId) return;
@@ -495,7 +495,7 @@ export default function Dashboard() {
                 <label className="block text-xs text-zinc-400 mb-1">Collection Folder *</label>
                 <select
                   value={saveCollectionId}
-                  onChange={e => setSaveCollectionId(e.target.value)}
+                  onChange={e => setSaveCollectionId(e.target.value ? Number(e.target.value) : '')}
                   className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
                 >
                   <option value="" disabled>

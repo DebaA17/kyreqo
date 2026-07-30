@@ -60,7 +60,7 @@ const useCollectionStore = create<CollectionStore>(set => ({
   createCollection: async (data: {
     name: string;
     workspace: string;
-    parent_collection?: string | null;
+    parent_collection?: number | null;
   }) => {
     set({ isLoading: true, error: null });
     try {
