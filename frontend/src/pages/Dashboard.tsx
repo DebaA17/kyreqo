@@ -7,6 +7,13 @@ import CollectionsExplorer from '../components/CollectionsExplorer';
 import useWorkspaceStore from '../store/workspaceStore';
 import useCollectionStore from '../store/collectionStore';
 import { apiClient } from '../api/client';
+import EnvironmentSelector from '../components/EnvironmentSelector';
+import useEnvironmentStore from '../store/environmentStore';
+import {
+  substituteVariables,
+  substituteVariablesInObject,
+  getActiveVariables,
+} from '../utils/variables';
 
 interface RequestHeader {
   key: string;
@@ -15,6 +22,7 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
   const { user, logout } = useAuthStore();
@@ -88,25 +96,54 @@ export default function Dashboard() {
     const startTime = Date.now();
 
     try {
+      // Get active environment variables
+      const activeVariables = getActiveVariables(environments, activeEnvironmentId);
+
+      // Build headers with variable substitution
       const reqHeaders: Record<string, string> = {};
       headers.forEach(h => {
-        if (h.enabled && h.key) reqHeaders[h.key] = h.value;
+        if (h.enabled && h.key) {
+          // Substitute variables in header values
+          reqHeaders[h.key] = substituteVariables(h.value, activeVariables);
+        }
       });
+
+      // Substitute variables in URL
+      const finalUrl = substituteVariables(url, activeVariables);
+
+      // Substitute variables in body
+      let finalBody = body;
+      if (body) {
+        try {
+          // Try to parse as JSON and substitute
+          const parsedBody = JSON.parse(body);
+          const substitutedBody = substituteVariablesInObject(parsedBody, activeVariables);
+          finalBody = JSON.stringify(substitutedBody, null, 2);
+        } catch {
+          // If not valid JSON, treat as string
+          finalBody = substituteVariables(body, activeVariables);
+        }
+      }
 
       const options: RequestInit = {
         method,
         headers: reqHeaders,
       };
 
-      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && body) {
-        options.body = body;
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && finalBody) {
+        options.body = finalBody;
       }
 
       const proxyUrl = `/api/requests/proxy/`;
       const proxyResponse = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, method, headers: reqHeaders, body: body || null }),
+        body: JSON.stringify({
+          url: finalUrl,
+          method,
+          headers: reqHeaders,
+          body: finalBody || null,
+        }),
       });
 
       if (!proxyResponse.ok) {
@@ -158,6 +195,11 @@ export default function Dashboard() {
             <p className="text-[10px] text-zinc-500 font-medium">MODERN API WORKGROUND</p>
           </div>
         </div>
+        {currentWorkspaceId && (
+          <div className="ml-4">
+            <EnvironmentSelector workspaceId={currentWorkspaceId} />
+          </div>
+        )}
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-semibold">
