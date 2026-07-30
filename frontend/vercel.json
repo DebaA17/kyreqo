@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; connect-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*;"
+          "value": "default-src 'self'; connect-src 'self' https://challenges.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*;"
         },
         {
           "key": "X-Frame-Options",
@@ -38,6 +38,10 @@
     {
       "source": "/static/admin/(.*)",
       "destination": "https://kyrego-api.onrender.com/static/admin/$1"
+    },
+    {
+      "source": "/((?!api|admin|static/admin|assets|favicon.png|favicon.ico).*)",
+      "destination": "/index.html"
     }
   ]
 }
