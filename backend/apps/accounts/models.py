@@ -13,7 +13,7 @@ def validate_avatar_url(value):
         if parsed.scheme not in ['http', 'https']:
             raise ValidationError("Avatar URL must use http or https protocol.")
         hostname = parsed.hostname.lower() if parsed.hostname else ''
-        if hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+        if hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:  # nosec B104
             raise ValidationError("Local hostnames are not allowed.")
     except Exception:
         raise ValidationError("Invalid URL format.")
