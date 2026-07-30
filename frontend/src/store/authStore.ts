@@ -6,7 +6,7 @@ import useCollectionStore from './collectionStore';
 import useEnvironmentStore from './environmentStore';
 
 interface AuthActions {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
   register: (data: Record<string, string>) => Promise<void>;
   logout: () => void;
   loadProfile: () => Promise<void>;
@@ -46,14 +46,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
 
     clearError: () => set({ error: null }),
 
-    login: async (email, password) => {
+    login: async (email, password, turnstileToken) => {
       set({ isLoading: true, error: null });
       try {
         const tokens = await apiClient<{ access: string; refresh: string }>(
           '/api/accounts/login/',
           {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
             skipAuth: true,
           }
         );

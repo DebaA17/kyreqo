@@ -12,6 +12,19 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        turnstile_token = request.data.get('turnstile_token')
+        ip_address = request.META.get('REMOTE_ADDR')
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0].strip()
+
+        from .utils import validate_turnstile_token
+        if not validate_turnstile_token(turnstile_token, ip_address):
+            return Response(
+                {"detail": "Security check failed. Please refresh the page and try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -42,6 +55,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip_address = x_forwarded_for.split(',')[0].strip()
+
+        turnstile_token = request.data.get('turnstile_token')
+        from .utils import validate_turnstile_token
+        if not validate_turnstile_token(turnstile_token, ip_address):
+            return Response(
+                {"detail": "Security check failed. Please refresh the page and try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             response = super().post(request, *args, **kwargs)

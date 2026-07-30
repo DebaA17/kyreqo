@@ -178,25 +178,27 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden">
       {}
-      <header className="flex items-center justify-between px-6 py-4 bg-[#0d0d11] border-b border-[#1f1f29] shadow-sm select-none">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Send className="h-5 w-5 text-white transform -rotate-45" />
+      <header className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 px-6 py-4 bg-[#0d0d11] border-b border-[#1f1f29] shadow-sm select-none">
+        <div className="flex items-center justify-between md:justify-start gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Send className="h-5 w-5 text-white transform -rotate-45" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                Kyreqo
+              </h1>
+              <p className="text-[10px] text-zinc-500 font-medium">MODERN API WORKGROUND</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              Kyreqo
-            </h1>
-            <p className="text-[10px] text-zinc-500 font-medium">MODERN API WORKGROUND</p>
-          </div>
+          {currentWorkspaceId && (
+            <div className="md:ml-4">
+              <EnvironmentSelector workspaceId={currentWorkspaceId} />
+            </div>
+          )}
         </div>
-        {currentWorkspaceId && (
-          <div className="ml-4">
-            <EnvironmentSelector workspaceId={currentWorkspaceId} />
-          </div>
-        )}
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 md:gap-4">
           <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-semibold">
             <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-ping"></span>
             {user ? `${user.first_name || 'User'}'s Sandbox` : 'Guest Sandbox'}
@@ -209,9 +211,9 @@ export default function Dashboard() {
       </header>
 
       {}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
         {}
-        <aside className="w-64 bg-[#0c0c10] border-r border-[#1f1f29] p-4 flex flex-col gap-4">
+        <aside className="w-full lg:w-64 bg-[#0c0c10] border-b lg:border-b-0 lg:border-r border-[#1f1f29] p-4 flex flex-col gap-4 flex-shrink-0">
           <div>
             <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase mb-2">
               Workspace
@@ -304,70 +306,76 @@ export default function Dashboard() {
           {}
           <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
             {}
-            <div className="flex gap-2">
-              <select
-                value={method}
-                onChange={e =>
-                  setMethod(e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY')
-                }
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-1 gap-2">
+                <select
+                  value={method}
+                  onChange={e =>
+                    setMethod(
+                      e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'
+                    )
+                  }
 
-                className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500
-                  ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
-                  ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
-                  ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
-                  ${method === 'PATCH' ? 'text-sky-400 border-sky-500/20' : ''}
-                  ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
-                  ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
-                `}
-              >
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-                <option value="DELETE">DELETE</option>
-                <option value="QUERY">QUERY</option>
-              </select>
-
-              <input
-                type="text"
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://api.example.com/endpoint"
-                className="flex-1 px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
-              />
-
-              <button
-                onClick={handleSend}
-                disabled={loading}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10"
-              >
-                {loading ? (
-                  <>
-                    <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 fill-current" />
-                    Send
-                  </>
-                )}
-              </button>
-
-              {user && (
-                <button
-                  onClick={() => {
-                    if (collections.length > 0) {
-                      setSaveCollectionId(collections[0].id);
-                    }
-                    setShowSaveRequestModal(true);
-                  }}
-                  className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition"
+                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500
+                    ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
+                    ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
+                    ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
+                    ${method === 'PATCH' ? 'text-sky-400 border-sky-500/20' : ''}
+                    ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
+                    ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
+                  `}
                 >
-                  <Folder className="h-4 w-4" />
-                  Save
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                  <option value="QUERY">QUERY</option>
+                </select>
+
+                <input
+                  type="text"
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  placeholder="https://api.example.com/endpoint"
+                  className="flex-1 min-w-0 px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSend}
+                  disabled={loading}
+                  className="flex-1 sm:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-current" />
+                      Send
+                    </>
+                  )}
                 </button>
-              )}
+
+                {user && (
+                  <button
+                    onClick={() => {
+                      if (collections.length > 0) {
+                        setSaveCollectionId(collections[0].id);
+                      }
+                      setShowSaveRequestModal(true);
+                    }}
+                    className="flex-1 sm:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer"
+                  >
+                    <Folder className="h-4 w-4" />
+                    Save
+                  </button>
+                )}
+              </div>
             </div>
 
             {}

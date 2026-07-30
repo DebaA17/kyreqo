@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   AlertTriangle,
 } from 'lucide-react';
+import Turnstile from '../components/Turnstile';
 
 const PRESET_AVATARS = [
   { name: 'Adventurer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix' },
@@ -25,6 +26,7 @@ export default function Register() {
   const [lastName, setLastName] = useState('');
   const [avatar, setAvatar] = useState(PRESET_AVATARS[0].url);
   const [customAvatar, setCustomAvatar] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const { register, isLoading, error, isAuthenticated, clearError } = useAuthStore();
@@ -55,6 +57,11 @@ export default function Register() {
       return;
     }
 
+    if (!turnstileToken) {
+      setValidationError('Please complete the security check.');
+      return;
+    }
+
     const finalAvatar = customAvatar.trim() ? customAvatar.trim() : avatar;
 
     try {
@@ -65,6 +72,7 @@ export default function Register() {
         first_name: firstName,
         last_name: lastName,
         avatar: finalAvatar,
+        turnstile_token: turnstileToken,
       });
       navigate('/', { replace: true });
     } catch (err) {
@@ -238,6 +246,8 @@ export default function Register() {
               />
             </div>
           </div>
+
+          <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
 
           {}
           <button

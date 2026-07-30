@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Send, Mail, Lock, AlertTriangle } from 'lucide-react';
+import Turnstile from '../components/Turnstile';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
@@ -31,8 +33,13 @@ export default function Login() {
       return;
     }
 
+    if (!turnstileToken) {
+      setValidationError('Please complete the security check.');
+      return;
+    }
+
     try {
-      await login(email, password);
+      await login(email, password, turnstileToken);
       navigate('/', { replace: true });
     } catch (err) {
       void err;
@@ -106,6 +113,8 @@ export default function Login() {
               />
             </div>
           </div>
+
+          <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
 
           {}
           <button
