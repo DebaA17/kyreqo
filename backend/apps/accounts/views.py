@@ -10,6 +10,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
+    throttle_scope = 'auth'
 
     def create(self, request, *args, **kwargs):
         turnstile_token = request.data.get('turnstile_token')
@@ -46,6 +47,8 @@ from .serializers import LoginAttemptSerializer, UserAdminDetailSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    throttle_scope = 'auth'
+
     def post(self, request, *args, **kwargs):
         email = request.data.get('email', '')
         ip_address = request.META.get('REMOTE_ADDR')
