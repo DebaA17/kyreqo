@@ -28,37 +28,57 @@ export default function Turnstile({ sitekey, onVerify }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let script = document.querySelector('script[src*="turnstile/v0/api.js"]') as HTMLScriptElement;
-    if (!script) {
-      script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
+    let widgetId: string | undefined;
 
     const initialize = () => {
       if (window.turnstile && containerRef.current) {
         try {
-          window.turnstile.render(containerRef.current, {
+          // Clear container to prevent duplicate elements in StrictMode
+          containerRef.current.innerHTML = '';
+
+          widgetId = window.turnstile.render(containerRef.current, {
             sitekey,
             callback: onVerify,
           });
         } catch (e) {
-          // Silent catch in case render was already called
           void e;
         }
       }
     };
 
-    if (window.turnstile) {
+    window.onloadTurnstileCallback = initialize;
+
+    let script = document.querySelector(
+      'script[src*="challenges.cloudflare.com/turnstile"]'
+    ) as HTMLScriptElement;
+
+    if (!script) {
+      script = document.createElement('script');
+      script.src =
+        'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    } else if (window.turnstile) {
       initialize();
     } else {
-      window.onloadTurnstileCallback = initialize;
+      script.addEventListener('load', initialize);
     }
 
     return () => {
-      window.onloadTurnstileCallback = undefined;
+      if (widgetId && window.turnstile) {
+        try {
+          window.turnstile.remove(widgetId);
+        } catch (e) {
+          void e;
+        }
+      }
+      if (script) {
+        script.removeEventListener('load', initialize);
+      }
+      if (window.onloadTurnstileCallback === initialize) {
+        window.onloadTurnstileCallback = undefined;
+      }
     };
   }, [sitekey, onVerify]);
 
