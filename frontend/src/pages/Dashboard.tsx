@@ -26,7 +26,9 @@ export default function Dashboard() {
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
   const { user, logout } = useAuthStore();
-  const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
+  const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
+    'GET'
+  );
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
   const [headers, setHeaders] = useState<RequestHeader[]>([
     { key: 'Content-Type', value: 'application/json', enabled: true },
@@ -123,7 +125,7 @@ export default function Dashboard() {
         headers: reqHeaders,
       };
 
-      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && finalBody) {
+      if (['POST', 'PUT', 'PATCH', 'DELETE', 'QUERY'].includes(method) && finalBody) {
         options.body = finalBody;
       }
 
@@ -222,7 +224,7 @@ export default function Dashboard() {
               workspaceId={currentWorkspaceId || ''}
               onSelectRequest={req => {
                 setUrl(req.url);
-                setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
+                setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
                 const reqHeaders: RequestHeader[] = Object.entries(req.headers || {}).map(
                   ([key, value]) => ({
                     key,
@@ -306,7 +308,7 @@ export default function Dashboard() {
               <select
                 value={method}
                 onChange={e =>
-                  setMethod(e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE')
+                  setMethod(e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY')
                 }
 
                 className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500
@@ -315,6 +317,7 @@ export default function Dashboard() {
                   ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
                   ${method === 'PATCH' ? 'text-sky-400 border-sky-500/20' : ''}
                   ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
+                  ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
                 `}
               >
                 <option value="GET">GET</option>
@@ -322,6 +325,7 @@ export default function Dashboard() {
                 <option value="PUT">PUT</option>
                 <option value="PATCH">PATCH</option>
                 <option value="DELETE">DELETE</option>
+                <option value="QUERY">QUERY</option>
               </select>
 
               <input

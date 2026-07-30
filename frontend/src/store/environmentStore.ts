@@ -33,6 +33,7 @@ interface EnvironmentStore {
   updateEnvironment: (id: number, data: Partial<Environment>) => Promise<Environment | null>;
   deleteEnvironment: (id: number) => Promise<void>;
   clearError: () => void;
+  reset: () => void;
 }
 
 const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
@@ -91,7 +92,7 @@ const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const updated = await apiClient<Environment>(`/api/environments/${id}/`, {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify(data),
       });
       set(state => ({
@@ -122,6 +123,7 @@ const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+  reset: () => set({ environments: [], activeEnvironmentId: null, isLoading: false, error: null }),
 }));
 
 export default useEnvironmentStore;

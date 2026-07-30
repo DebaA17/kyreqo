@@ -37,6 +37,7 @@ interface CollectionStore {
   }) => Promise<Collection | null>;
   deleteCollection: (id: number) => Promise<void>;
   clearError: () => void;
+  reset: () => void;
 }
 
 const useCollectionStore = create<CollectionStore>(set => ({
@@ -95,6 +96,7 @@ const useCollectionStore = create<CollectionStore>(set => ({
   },
 
   clearError: () => set({ error: null }),
+  reset: () => set({ collections: [], isLoading: false, error: null }),
 }));
 
 export default useCollectionStore;

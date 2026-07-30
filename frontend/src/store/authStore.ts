@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { User, AuthState } from '../types/auth';
 import { apiClient } from '../api/client';
 import useWorkspaceStore from './workspaceStore';
+import useCollectionStore from './collectionStore';
+import useEnvironmentStore from './environmentStore';
 
 interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
@@ -101,6 +103,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       useWorkspaceStore.getState().reset();
+      useCollectionStore.getState().reset();
+      useEnvironmentStore.getState().reset();
       set({
         user: null,
         accessToken: null,

@@ -207,6 +207,7 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
                         ${req.method === 'PUT' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : ''}
                         ${req.method === 'PATCH' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : ''}
                         ${req.method === 'DELETE' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : ''}
+                        ${req.method === 'QUERY' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : ''}
                       `}
                       >
                         {req.method}
