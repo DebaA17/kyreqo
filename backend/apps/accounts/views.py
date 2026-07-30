@@ -19,8 +19,9 @@ class RegisterView(generics.CreateAPIView):
         if x_forwarded_for:
             ip_address = x_forwarded_for.split(',')[0].strip()
 
+        from django.conf import settings
         from .utils import validate_turnstile_token
-        if not validate_turnstile_token(turnstile_token, ip_address):
+        if not settings.DEBUG and not validate_turnstile_token(turnstile_token, ip_address):
             return Response(
                 {"detail": "Security check failed. Please refresh the page and try again."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -60,8 +61,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             ip_address = x_forwarded_for.split(',')[0].strip()
 
         turnstile_token = request.data.get('turnstile_token')
+        from django.conf import settings
         from .utils import validate_turnstile_token
-        if not validate_turnstile_token(turnstile_token, ip_address):
+        if not settings.DEBUG and not validate_turnstile_token(turnstile_token, ip_address):
             return Response(
                 {"detail": "Security check failed. Please refresh the page and try again."},
                 status=status.HTTP_400_BAD_REQUEST
