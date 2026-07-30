@@ -1,4 +1,4 @@
-const API_BASE = ''; // Relies on Vite proxy to forward requests to Django backend at http://localhost:8000
+const API_BASE = '';
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
@@ -8,7 +8,6 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   const url = `${API_BASE}${path}`;
   const headers = new Headers(options.headers || {});
 
-  // Add Authorization header if token exists and skipAuth is not set
   if (!options.skipAuth) {
     const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
@@ -16,7 +15,6 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     }
   }
 
-  // Ensure JSON requests set Content-Type
   if (options.body && !headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
@@ -28,7 +26,6 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
 
   let response = await fetch(url, fetchOptions);
 
-  // If unauthorized, attempt token refresh
   if (response.status === 401 && !options.skipAuth) {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
@@ -47,11 +44,9 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
 
           localStorage.setItem('accessToken', newAccessToken);
 
-          // Retry the request with the new access token
           headers.set('Authorization', `Bearer ${newAccessToken}`);
           response = await fetch(url, fetchOptions);
         } else {
-          // Refresh token expired or invalid, trigger logout
           handleAuthFailure();
         }
       } catch (error) {
@@ -69,12 +64,15 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     throw new Error(message);
   }
 
+  if (response.status === 204) {
+    return {} as T;
+  }
   return response.json() as Promise<T>;
 }
 
 function handleAuthFailure() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
-  // Dispatch a custom event to notify stores / app
+
   window.dispatchEvent(new Event('auth-logout'));
 }

@@ -6,7 +6,7 @@ export default function NotFound() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 px-6 overflow-hidden relative">
-      {/* Background radial glow */}
+      {}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="flex flex-col items-center text-center max-w-md z-10">

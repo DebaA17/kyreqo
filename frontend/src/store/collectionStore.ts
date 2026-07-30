@@ -1,17 +1,28 @@
 import { create } from 'zustand';
 import { apiClient } from '../api/client';
 
-export interface Collection {
-  id: string;
+export interface SavedRequest {
+  id: number;
+  collection: number;
   name: string;
-  description?: string;
-  workspace: string;
-  parent?: string | null;
+  url: string;
+  method: string;
+  headers?: Record<string, unknown>;
+  query_params?: Record<string, unknown>;
+  body?: string;
   created_at: string;
   updated_at: string;
-  // You might have these fields based on your backend
-  // type?: 'folder' | 'request';
-  // request?: RequestData;
+}
+
+export interface Collection {
+  id: number;
+  name: string;
+  description?: string;
+  workspace: number;
+  parent_collection?: number | null;
+  requests?: SavedRequest[];
+  created_at: string;
+  updated_at: string;
 }
 
 interface CollectionStore {
@@ -22,9 +33,9 @@ interface CollectionStore {
   createCollection: (data: {
     name: string;
     workspace: string;
-    parent?: string | null;
+    parent_collection?: number | null;
   }) => Promise<Collection | null>;
-  deleteCollection: (id: string) => Promise<void>;
+  deleteCollection: (id: number) => Promise<void>;
   clearError: () => void;
 }
 
@@ -46,7 +57,11 @@ const useCollectionStore = create<CollectionStore>(set => ({
     }
   },
 
-  createCollection: async (data: { name: string; workspace: string; parent?: string | null }) => {
+  createCollection: async (data: {
+    name: string;
+    workspace: string;
+    parent_collection?: string | null;
+  }) => {
     set({ isLoading: true, error: null });
     try {
       const newCollection = await apiClient<Collection>('/api/collections/', {
@@ -65,7 +80,7 @@ const useCollectionStore = create<CollectionStore>(set => ({
     }
   },
 
-  deleteCollection: async (id: string) => {
+  deleteCollection: async (id: number) => {
     set({ isLoading: true, error: null });
     try {
       await apiClient(`/api/collections/${id}/`, { method: 'DELETE' });

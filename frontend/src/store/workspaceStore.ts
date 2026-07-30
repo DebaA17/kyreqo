@@ -33,7 +33,6 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
           get().currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null),
       });
     } catch (error: unknown) {
-      // ← Changed here
       const message = error instanceof Error ? error.message : 'Failed to fetch workspaces';
       set({
         error: message,
@@ -62,7 +61,6 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
       return newWorkspace;
     } catch (error: unknown) {
-      // ← Changed here
       const message = error instanceof Error ? error.message : 'Failed to create workspace';
       set({
         error: message,
@@ -93,7 +91,6 @@ const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         };
       });
     } catch (error: unknown) {
-      // ← Changed here
       const message = error instanceof Error ? error.message : 'Failed to delete workspace';
       set({
         error: message,

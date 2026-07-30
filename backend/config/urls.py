@@ -9,12 +9,12 @@ urlpatterns = [
     path('health/', health_view, name='health_check'),
     path('admin/', admin.site.urls),
     
-    # OpenAPI Schema & Interactive UI Docs
+    
     path('api/schema/', SpectacularAPIView.as_view(permission_classes=[AllowAny]), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema', permission_classes=[AllowAny]), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema', permission_classes=[AllowAny]), name='redoc'),
 
-    # API endpoints
+    
     path('api/accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('api/workspaces/', include('apps.workspaces.urls', namespace='workspaces')),
     path('api/collections/', include('apps.collections.urls', namespace='collections')),

@@ -3,16 +3,16 @@ from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
-    # Display these fields in the user list
+    
     list_display = ('id', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined')
     
-    # Fields to search
+    
     search_fields = ('email', 'first_name', 'last_name')
     
-    # Order by email
+    
     ordering = ('email',)
     
-    # Fields shown when editing a user
+    
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'avatar')}),
@@ -20,7 +20,7 @@ class CustomUserAdmin(UserAdmin):
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     
-    # Fields shown when adding a new user
+    
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -28,7 +28,7 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
-# Register the models with the admin
+
 admin.site.register(CustomUser, CustomUserAdmin)
 
 
@@ -42,6 +42,6 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     search_fields = ('email', 'ip_address', 'user_agent')
     ordering = ('-timestamp',)
 
-    # Make them read-only in the admin detail view to prevent manipulation
+    
     def get_readonly_fields(self, request, obj=None):
         return [f.name for f in self.model._meta.fields]

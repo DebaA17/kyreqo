@@ -33,7 +33,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsWorkspaceOwner()]
         return super().get_permissions()
 
-    # Member management actions
+    
     @action(detail=True, methods=['get', 'post'], url_path='members')
     def members(self, request, pk=None):
         workspace = self.get_object()

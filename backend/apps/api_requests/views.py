@@ -28,15 +28,15 @@ def is_safe_url(url_str):
         if not host:
             return False
         
-        # Resolve hostname to IP address
+        
         ip_str = socket.gethostbyname(host)
         ip = ipaddress.ip_address(ip_str)
         
-        # Allow private / loopback IPs in debug mode
+        
         if settings.DEBUG:
             return True
 
-        # Check against private / loopback / link-local addresses
+        
         if (ip.is_private or 
             ip.is_loopback or 
             ip.is_link_local or 
@@ -68,22 +68,22 @@ class ProxyRequestView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 1. SSRF Protection Check
+        
         if not is_safe_url(target_url):
             return Response(
                 {"error": "SSRF Protection: Access to loopback, private, or invalid networks is prohibited."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # 2. Prepare request options
-        # Filter out system headers that might interfere with requests
+        
+        
         filtered_headers = {
             k: v for k, v in headers.items()
             if k.lower() not in ('host', 'content-length', 'connection')
         }
 
         try:
-            # 3. Execute request via python requests
+            
             res = requests.request(
                 method=method,
                 url=target_url,
@@ -92,7 +92,7 @@ class ProxyRequestView(APIView):
                 timeout=10
             )
 
-            # Try parsing response as JSON, fallback to plain text
+            
             try:
                 response_data = res.json()
             except ValueError:

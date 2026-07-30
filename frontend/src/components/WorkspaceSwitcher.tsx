@@ -31,7 +31,6 @@ const WorkspaceSwitcher: React.FC = () => {
     }
   }, [fetchWorkspaces, isAuthenticated]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -80,7 +79,7 @@ const WorkspaceSwitcher: React.FC = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Current workspace display - click to toggle dropdown */}
+      {}
       <div
         className="flex items-center justify-between p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700"
         onClick={() => setIsOpen(!isOpen)}
@@ -107,7 +106,7 @@ const WorkspaceSwitcher: React.FC = () => {
         </svg>
       </div>
 
-      {/* Error message */}
+      {}
       {error && (
         <div className="mt-2 p-2 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm flex justify-between">
           <span>{error}</span>
@@ -117,7 +116,7 @@ const WorkspaceSwitcher: React.FC = () => {
         </div>
       )}
 
-      {/* Dropdown menu */}
+      {}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-lg shadow-xl overflow-hidden z-50 border border-gray-700">
           <div className="max-h-60 overflow-y-auto">
@@ -171,7 +170,7 @@ const WorkspaceSwitcher: React.FC = () => {
             )}
           </div>
 
-          {/* Create workspace button */}
+          {}
           <div className="border-t border-gray-700 p-2">
             <button
               className="w-full px-4 py-2.5 text-sm text-blue-400 hover:bg-gray-700 rounded transition-colors flex items-center justify-center gap-2"
@@ -194,7 +193,7 @@ const WorkspaceSwitcher: React.FC = () => {
         </div>
       )}
 
-      {/* Create Workspace Modal */}
+      {}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
