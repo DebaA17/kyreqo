@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Send, Play, Terminal, HelpCircle, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
+import CollectionsExplorer from '../components/CollectionsExplorer';
+import useWorkspaceStore from '../store/workspaceStore';
 
 interface RequestHeader {
   key: string;
@@ -11,6 +13,7 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const { currentWorkspaceId } = useWorkspaceStore();
   const { user, logout } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
@@ -141,21 +144,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase">
-                Saved Collections
-              </h3>
-              <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
-                0 / 0
-              </span>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-xl p-4 text-center">
-              <HelpCircle className="h-8 w-8 text-zinc-600 mb-2" />
-              <p className="text-xs text-zinc-400 font-medium">No saved requests yet.</p>
-              <p className="text-[10px] text-zinc-600 mt-1 max-w-[160px]">
-                Start creating request history, environment variables, and request collections.
-              </p>
-            </div>
+            <CollectionsExplorer workspaceId={currentWorkspaceId || ''} />
           </div>
 
           <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
