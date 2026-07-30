@@ -36,6 +36,7 @@ class CollectionRequest(models.Model):
         ('DELETE', 'DELETE'),
         ('OPTIONS', 'OPTIONS'),
         ('HEAD', 'HEAD'),
+        ('QUERY', 'QUERY'),
     )
 
     collection = models.ForeignKey(
