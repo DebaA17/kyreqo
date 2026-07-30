@@ -96,31 +96,24 @@ export default function Dashboard() {
     const startTime = Date.now();
 
     try {
-      // Get active environment variables
       const activeVariables = getActiveVariables(environments, activeEnvironmentId);
 
-      // Build headers with variable substitution
       const reqHeaders: Record<string, string> = {};
       headers.forEach(h => {
         if (h.enabled && h.key) {
-          // Substitute variables in header values
           reqHeaders[h.key] = substituteVariables(h.value, activeVariables);
         }
       });
 
-      // Substitute variables in URL
       const finalUrl = substituteVariables(url, activeVariables);
 
-      // Substitute variables in body
       let finalBody = body;
       if (body) {
         try {
-          // Try to parse as JSON and substitute
           const parsedBody = JSON.parse(body);
           const substitutedBody = substituteVariablesInObject(parsedBody, activeVariables);
           finalBody = JSON.stringify(substitutedBody, null, 2);
         } catch {
-          // If not valid JSON, treat as string
           finalBody = substituteVariables(body, activeVariables);
         }
       }

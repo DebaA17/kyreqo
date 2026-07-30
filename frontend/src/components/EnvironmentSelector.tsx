@@ -22,7 +22,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ workspaceId }
 
   const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (id: number) => {
     setActiveEnvironment(id);
     setIsOpen(false);
   };
@@ -35,7 +35,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ workspaceId }
   return (
     <>
       <div className="relative">
-        {/* Selector Button */}
+        {}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg hover:border-zinc-700 transition text-sm"
@@ -49,7 +49,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ workspaceId }
           />
         </button>
 
-        {/* Dropdown */}
+        {}
         {isOpen && (
           <div className="absolute top-full left-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden z-50">
             <div className="max-h-60 overflow-y-auto">
@@ -90,7 +90,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ workspaceId }
         )}
       </div>
 
-      {/* Environment Modal */}
+      {}
       <EnvironmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

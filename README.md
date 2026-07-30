@@ -30,8 +30,8 @@ Click on the issue links below to view detailed requirements, tasks, and code br
 4. [x] **Frontend (Ruchika)**: [#4](https://github.com/DebaA17/kyrego/issues/4) Interactive Workspace Switcher Dropdown *(Completed)*
 5. [x] **Backend (Debasis)**: [#7](https://github.com/DebaA17/kyrego/issues/7) DRF Collections & Request Persistence CRUD APIs *(Completed)*
 6. [x] **Frontend (Ruchika)**: [#5](https://github.com/DebaA17/kyrego/issues/5) Collections Explorer & Tree View *(Completed)*
-7. **Backend (Debasis)**: [#8](https://github.com/DebaA17/kyrego/issues/8) DRF Environments Variables CRUD APIs
-8. **Frontend (Ruchika)**: [#6](https://github.com/DebaA17/kyrego/issues/6) Environment Variables Manager Modal
+7. [x] **Backend (Debasis)**: [#8](https://github.com/DebaA17/kyrego/issues/8) DRF Environments Variables CRUD APIs *(Completed)*
+8. [x] **Frontend (Ruchika)**: [#6](https://github.com/DebaA17/kyrego/issues/6) Environment Variables Manager Modal *(Completed)*
 
 ---
 

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { apiClient } from '../api/client';
 
 export interface Environment {
-  id: string;
+  id: number;
   name: string;
   workspace: string;
   variables: EnvironmentVariable[];
@@ -19,19 +19,19 @@ export interface EnvironmentVariable {
 
 interface EnvironmentStore {
   environments: Environment[];
-  activeEnvironmentId: string | null;
+  activeEnvironmentId: number | null;
   isLoading: boolean;
   error: string | null;
 
   fetchEnvironments: (workspaceId: string) => Promise<void>;
-  setActiveEnvironment: (id: string | null) => void;
+  setActiveEnvironment: (id: number | null) => void;
   createEnvironment: (data: {
     name: string;
     workspace: string;
     variables?: EnvironmentVariable[];
   }) => Promise<Environment | null>;
-  updateEnvironment: (id: string, data: Partial<Environment>) => Promise<Environment | null>;
-  deleteEnvironment: (id: string) => Promise<void>;
+  updateEnvironment: (id: number, data: Partial<Environment>) => Promise<Environment | null>;
+  deleteEnvironment: (id: number) => Promise<void>;
   clearError: () => void;
 }
 
@@ -59,7 +59,7 @@ const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     }
   },
 
-  setActiveEnvironment: (id: string | null) => {
+  setActiveEnvironment: (id: number | null) => {
     set({ activeEnvironmentId: id });
   },
 
@@ -87,7 +87,7 @@ const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     }
   },
 
-  updateEnvironment: async (id: string, data: Partial<Environment>) => {
+  updateEnvironment: async (id: number, data: Partial<Environment>) => {
     set({ isLoading: true, error: null });
     try {
       const updated = await apiClient<Environment>(`/api/environments/${id}/`, {
@@ -106,7 +106,7 @@ const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     }
   },
 
-  deleteEnvironment: async (id: string) => {
+  deleteEnvironment: async (id: number) => {
     set({ isLoading: true, error: null });
     try {
       await apiClient(`/api/environments/${id}/`, { method: 'DELETE' });

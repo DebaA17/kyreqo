@@ -22,7 +22,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
     clearError,
   } = useEnvironmentStore();
 
-  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
+  const [selectedEnvId, setSelectedEnvId] = useState<number | null>(null);
   const [variables, setVariables] = useState<EnvironmentVariable[]>([]);
   const [envName, setEnvName] = useState('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -77,7 +77,6 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
     });
 
     if (updated) {
-      // Refresh to get updated data
       await fetchEnvironments(workspaceId);
     }
   };
@@ -119,7 +118,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-900 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-lg font-semibold text-white">Environment Variables</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-700 rounded transition">
@@ -127,7 +126,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
           </button>
         </div>
 
-        {/* Error */}
+        {}
         {error && (
           <div className="mx-4 mt-4 p-2 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm flex justify-between">
             <span>{error}</span>
@@ -138,7 +137,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
         )}
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - Environment List */}
+          {}
           <div className="w-64 border-r border-gray-700 p-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -212,11 +211,11 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
             </div>
           </div>
 
-          {/* Main Content - Variables Editor */}
+          {}
           <div className="flex-1 flex flex-col p-4 overflow-hidden">
             {selectedEnvId ? (
               <>
-                {/* Environment Name and Actions */}
+                {}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <h3 className="text-white font-medium">{envName}</h3>
@@ -242,7 +241,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
                   </div>
                 </div>
 
-                {/* Variables Table */}
+                {}
                 <div className="flex-1 overflow-y-auto">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-xs text-gray-400">Variables</span>
@@ -319,7 +318,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
                   </table>
                 </div>
 
-                {/* Save Button */}
+                {}
                 <div className="pt-3 border-t border-gray-700 flex justify-end">
                   <button
                     onClick={handleSaveEnvironment}

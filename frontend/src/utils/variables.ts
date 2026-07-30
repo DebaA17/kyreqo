@@ -1,22 +1,14 @@
 import { EnvironmentVariable } from '../store/environmentStore';
 
-/**
- * Substitutes {{variable}} placeholders in a string with values from environment variables
- * @param text - The string containing {{variable}} placeholders
- * @param variables - Array of environment variables with key, value, and enabled status
- * @returns The string with all placeholders replaced
- */
 export const substituteVariables = (text: string, variables: EnvironmentVariable[]): string => {
   if (!text || !variables || variables.length === 0) {
     return text;
   }
 
-  // Filter only enabled variables
   const enabledVariables = variables.filter(v => v.enabled);
 
   let result = text;
 
-  // Replace each {{key}} with its value
   enabledVariables.forEach(variable => {
     const pattern = new RegExp(`\\{\\{${variable.key}\\}\\}`, 'g');
     result = result.replace(pattern, variable.value);
@@ -25,12 +17,6 @@ export const substituteVariables = (text: string, variables: EnvironmentVariable
   return result;
 };
 
-/**
- * Recursively substitutes variables in an object (for headers, body, params)
- * @param obj - The object containing strings with {{variable}} placeholders
- * @param variables - Array of environment variables
- * @returns The object with all string values substituted
- */
 export const substituteVariablesInObject = <T>(obj: T, variables: EnvironmentVariable[]): T => {
   if (!obj || !variables || variables.length === 0) {
     return obj;
@@ -55,13 +41,9 @@ export const substituteVariablesInObject = <T>(obj: T, variables: EnvironmentVar
   return obj;
 };
 
-/**
- * Gets the active environment variables from the store
- * Helper function to be used with the environment store
- */
 export const getActiveVariables = (
-  environments: Array<{ id: string; variables: EnvironmentVariable[] }>,
-  activeId: string | null
+  environments: Array<{ id: number; variables: EnvironmentVariable[] }>,
+  activeId: number | null
 ): EnvironmentVariable[] => {
   if (!activeId) return [];
   const activeEnv = environments.find(e => e.id === activeId);
