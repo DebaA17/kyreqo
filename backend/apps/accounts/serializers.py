@@ -20,7 +20,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({"password": "Password fields must match."})  
+            raise serializers.ValidationError({"password": "Password fields must match."})  # nosec B105
         return attrs
 
     def create(self, validated_data):
