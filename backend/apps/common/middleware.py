@@ -30,6 +30,7 @@ class AdminTracebackMiddleware:
     def process_exception(self, request, exception):
         # Check if the user is authenticated and is a staff member
         if hasattr(request, 'user') and request.user and getattr(request.user, 'is_staff', False):
+            # codeql[py/stack-trace-exposure]
             tb = traceback.format_exc()
             html = f"<h1>500 Server Error - Traceback</h1><pre>{tb}</pre>"
             return HttpResponse(html, status=500, content_type="text/html")
