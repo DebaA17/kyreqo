@@ -37,11 +37,21 @@ from .models import LoginAttempt
 
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
-    list_display = ('timestamp', 'email', 'user', 'ip_address', 'is_successful', 'user_agent')
+    list_display = ('timestamp', 'email', 'display_user', 'ip_address', 'is_successful', 'user_agent')
     list_filter = ('is_successful', 'timestamp')
     search_fields = ('email', 'ip_address', 'user_agent')
     ordering = ('-timestamp',)
 
-    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+    def display_user(self, obj):
+        try:
+            return obj.user.email if obj.user else "-"
+        except Exception:
+            return "Deleted User"
+    display_user.short_description = 'User'
+
+    # Read-only all fields
     def get_readonly_fields(self, request, obj=None):
         return [f.name for f in self.model._meta.fields]

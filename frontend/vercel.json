@@ -40,7 +40,7 @@
       "destination": "https://kyreqo-api.onrender.com/static/admin/$1"
     },
     {
-      "source": "/((?!api|admin|static/admin|assets|favicon.png|favicon.ico).*)",
+      "source": "/((?!api|admin/|static/admin|assets|favicon.png|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]
