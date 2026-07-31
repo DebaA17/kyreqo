@@ -124,17 +124,19 @@ class ProxyRequestView(APIView):
             )
 
     def _log_request_history(self, request, workspace_id, url, method, headers, body, response_status, response_time):
+        print(f"DEBUG: _log_request_history called: user={request.user}, authenticated={getattr(request.user, 'is_authenticated', False)}, workspace_id={workspace_id}")
         if request.user and request.user.is_authenticated and workspace_id:
             try:
                 from apps.workspaces.models import Workspace
-                from .models import RequestHistory
+                from apps.history.models import RequestHistory
                 workspace = Workspace.objects.filter(
                     models.Q(owner=request.user) |
                     models.Q(memberships__user=request.user)
                 ).distinct().filter(id=workspace_id).first()
+                print(f"DEBUG: workspace found: {workspace}")
 
                 if workspace:
-                    RequestHistory.objects.create(
+                    history_entry = RequestHistory.objects.create(
                         workspace=workspace,
                         user=request.user,
                         url=url,
@@ -144,7 +146,9 @@ class ProxyRequestView(APIView):
                         response_status=response_status,
                         response_time=response_time
                     )
-            except Exception:  # nosec B110
+                    print(f"DEBUG: RequestHistory entry created: {history_entry.id}")
+            except Exception as e:  # nosec B110
+                print(f"DEBUG: Exception in _log_request_history: {e}")
                 pass
 
 

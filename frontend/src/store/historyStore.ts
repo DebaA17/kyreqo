@@ -11,6 +11,7 @@ interface HistoryStore {
   deleteHistoryEntry: (id: string) => Promise<void>;
   clearHistory: (workspaceId: string) => Promise<void>;
   clearError: () => void;
+  reset: () => void;
 }
 
 const useHistoryStore = create<HistoryStore>(set => ({
@@ -65,6 +66,7 @@ const useHistoryStore = create<HistoryStore>(set => ({
   },
 
   clearError: () => set({ error: null }),
+  reset: () => set({ history: [], isLoading: false, error: null }),
 }));
 
 export default useHistoryStore;

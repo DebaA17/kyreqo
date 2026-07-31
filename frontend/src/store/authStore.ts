@@ -4,6 +4,7 @@ import { apiClient } from '../api/client';
 import useWorkspaceStore from './workspaceStore';
 import useCollectionStore from './collectionStore';
 import useEnvironmentStore from './environmentStore';
+import useHistoryStore from './historyStore';
 
 interface AuthActions {
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
@@ -30,6 +31,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
   if (typeof window !== 'undefined') {
     window.addEventListener('auth-logout', () => {
       useWorkspaceStore.getState().reset();
+      useHistoryStore.getState().reset();
       set({
         user: null,
         accessToken: null,
@@ -105,6 +107,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       useWorkspaceStore.getState().reset();
       useCollectionStore.getState().reset();
       useEnvironmentStore.getState().reset();
+      useHistoryStore.getState().reset();
       set({
         user: null,
         accessToken: null,
@@ -133,6 +136,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         useWorkspaceStore.getState().reset();
+        useHistoryStore.getState().reset();
         const message = err instanceof Error ? err.message : 'Failed to retrieve profile.';
         set({
           user: null,

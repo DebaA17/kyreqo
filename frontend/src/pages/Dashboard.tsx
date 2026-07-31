@@ -158,9 +158,17 @@ export default function Dashboard() {
       }
 
       const proxyUrl = `/api/requests/proxy/`;
+      const accessToken = localStorage.getItem('accessToken');
+      const proxyHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (accessToken) {
+        proxyHeaders['Authorization'] = `Bearer ${accessToken}`;
+      }
+
       const proxyResponse = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: proxyHeaders,
         body: JSON.stringify({
           url: finalUrl,
           method,
