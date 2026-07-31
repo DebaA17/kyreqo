@@ -29,15 +29,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://kyrego-api.onrender.com/api/$1"
+      "destination": "https://kyreqo-api.onrender.com/api/$1"
     },
     {
       "source": "/admin/(.*)",
-      "destination": "https://kyrego-api.onrender.com/admin/$1"
+      "destination": "https://kyreqo-api.onrender.com/admin/$1"
     },
     {
       "source": "/static/admin/(.*)",
-      "destination": "https://kyrego-api.onrender.com/static/admin/$1"
+      "destination": "https://kyreqo-api.onrender.com/static/admin/$1"
     },
     {
       "source": "/((?!api|admin|static/admin|assets|favicon.png|favicon.ico).*)",
