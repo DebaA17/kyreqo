@@ -1,14 +1,14 @@
 <h1 align="center">Kyreqo</h1>
 
 <p align="center">
-  <a href="https://github.com/DebaA17/kyrego/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/DebaA17/kyrego/ci.yml?branch=main&label=CI%20Pipeline&style=flat-square" alt="CI Pipeline Status" />
+  <a href="https://github.com/DebaA17/kyreqo/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/DebaA17/kyreqo/ci.yml?branch=main&label=CI%20Pipeline&style=flat-square" alt="CI Pipeline Status" />
   </a>
-  <a href="https://github.com/DebaA17/kyrego/actions/workflows/deploy.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/DebaA17/kyrego/deploy.yml?branch=main&label=Backend%20CI&style=flat-square" alt="Backend CI Status" />
+  <a href="https://github.com/DebaA17/kyreqo/actions/workflows/deploy.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/DebaA17/kyreqo/deploy.yml?branch=main&label=Backend%20CI&style=flat-square" alt="Backend CI Status" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/DebaA17/kyrego?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/github/license/DebaA17/kyreqo?style=flat-square" alt="License" />
   </a>
   <a href="SECURITY.md">
     <img src="https://img.shields.io/badge/Security-Policy-blue?style=flat-square" alt="Security Policy" />
