@@ -16,6 +16,7 @@ import {
 } from '../utils/variables';
 import HistorySidebar from '../components/HistorySidebar';
 import { RequestHistory } from '../types/history';
+import useHistoryStore from '../store/historyStore';
 
 interface RequestHeader {
   key: string;
@@ -165,6 +166,7 @@ export default function Dashboard() {
           method,
           headers: reqHeaders,
           body: finalBody || null,
+          workspace: currentWorkspaceId,
         }),
       });
 
@@ -184,6 +186,10 @@ export default function Dashboard() {
         time: duration,
         size: sizeBytes,
       });
+
+      if (currentWorkspaceId) {
+        useHistoryStore.getState().fetchHistory(currentWorkspaceId);
+      }
     } catch (error: unknown) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : String(error);
