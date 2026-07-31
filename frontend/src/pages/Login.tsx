@@ -33,18 +33,24 @@ export default function Login() {
       return;
     }
 
-    if (!turnstileToken) {
+    const isLocal =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!isLocal && !turnstileToken) {
       setValidationError('Please complete the security check.');
       return;
     }
 
     try {
-      await login(email, password, turnstileToken);
+      await login(email, password, turnstileToken || '');
       navigate('/', { replace: true });
     } catch (err) {
       void err;
     }
   };
+
+  const isLocal =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden relative">
@@ -114,7 +120,13 @@ export default function Login() {
             </div>
           </div>
 
-          <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
+          {isLocal ? (
+            <div className="text-[11px] text-zinc-500 text-center my-3 select-none py-2 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40">
+              🛡️ Turnstile Bypassed (Localhost)
+            </div>
+          ) : (
+            <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
+          )}
 
           {}
           <button

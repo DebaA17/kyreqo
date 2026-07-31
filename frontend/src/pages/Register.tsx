@@ -57,7 +57,10 @@ export default function Register() {
       return;
     }
 
-    if (!turnstileToken) {
+    const isLocal =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!isLocal && !turnstileToken) {
       setValidationError('Please complete the security check.');
       return;
     }
@@ -72,13 +75,16 @@ export default function Register() {
         first_name: firstName,
         last_name: lastName,
         avatar: finalAvatar,
-        turnstile_token: turnstileToken,
+        turnstile_token: turnstileToken || '',
       });
       navigate('/', { replace: true });
     } catch (err) {
       void err;
     }
   };
+
+  const isLocal =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-y-auto relative py-12">
@@ -247,7 +253,13 @@ export default function Register() {
             </div>
           </div>
 
-          <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
+          {isLocal ? (
+            <div className="text-[11px] text-zinc-500 text-center my-3 select-none py-2 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40">
+              🛡️ Turnstile Bypassed (Localhost)
+            </div>
+          ) : (
+            <Turnstile sitekey="0x4AAAAAAEB_3tNUFCUROX6P" onVerify={setTurnstileToken} />
+          )}
 
           {}
           <button

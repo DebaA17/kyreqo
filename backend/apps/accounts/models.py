@@ -1,5 +1,22 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.core.exceptions import ValidationError
+from urllib.parse import urlparse
+
+def validate_avatar_url(value):
+    if not value:
+        return
+    if len(value) > 500:
+        raise ValidationError("Avatar URL cannot exceed 500 characters.")
+    try:
+        parsed = urlparse(value)
+        if parsed.scheme not in ['http', 'https']:
+            raise ValidationError("Avatar URL must use http or https protocol.")
+        hostname = parsed.hostname.lower() if parsed.hostname else ''
+        if hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:  # nosec B104
+            raise ValidationError("Local hostnames are not allowed.")
+    except Exception:
+        raise ValidationError("Invalid URL format.")
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -26,7 +43,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
-    avatar = models.URLField(max_length=500, blank=True, null=True)
+    avatar = models.URLField(max_length=500, blank=True, null=True, validators=[validate_avatar_url])
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

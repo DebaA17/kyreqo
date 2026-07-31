@@ -4,7 +4,7 @@ import requests
 def validate_turnstile_token(token, ip_address=None):
     secret = os.getenv('TURNSTILE_SECRET_KEY')
     if not secret:
-        # If no secret is configured (e.g. in local development), bypass validation
+        
         return True
     
     if not token:
