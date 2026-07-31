@@ -57,10 +57,14 @@ class ProxyRequestView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        import time
+        start_time = time.time()
+
         target_url = request.data.get('url')
         method = request.data.get('method', 'GET').upper()
         headers = request.data.get('headers', {})
         body = request.data.get('body')
+        workspace_id = request.data.get('workspace')
 
         if not target_url:
             return Response(
@@ -68,22 +72,18 @@ class ProxyRequestView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        
         if not is_safe_url(target_url):
             return Response(
                 {"error": "SSRF Protection: Access to loopback, private, or invalid networks is prohibited."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        
-        
         filtered_headers = {
             k: v for k, v in headers.items()
             if k.lower() not in ('host', 'content-length', 'connection')
         }
 
         try:
-            
             res = requests.request(
                 method=method,
                 url=target_url,
@@ -92,11 +92,15 @@ class ProxyRequestView(APIView):
                 timeout=10
             )
 
-            
+            duration_ms = int((time.time() - start_time) * 1000)
+            response_status = res.status_code
+
             try:
                 response_data = res.json()
             except ValueError:
                 response_data = res.text
+
+            self._log_request_history(request, workspace_id, target_url, method, headers, body, response_status, duration_ms)
 
             return Response({
                 "status": res.status_code,
@@ -105,15 +109,47 @@ class ProxyRequestView(APIView):
             }, status=status.HTTP_200_OK)
 
         except requests.exceptions.Timeout:
+            duration_ms = int((time.time() - start_time) * 1000)
+            self._log_request_history(request, workspace_id, target_url, method, headers, body, status.HTTP_504_GATEWAY_TIMEOUT, duration_ms)
             return Response(
                 {"error": "The request timed out after 10 seconds."},
                 status=status.HTTP_504_GATEWAY_TIMEOUT
             )
         except requests.exceptions.RequestException as e:
+            duration_ms = int((time.time() - start_time) * 1000)
+            self._log_request_history(request, workspace_id, target_url, method, headers, body, status.HTTP_502_BAD_GATEWAY, duration_ms)
             return Response(
                 {"error": f"Failed to execute target request: {str(e)}"},
                 status=status.HTTP_502_BAD_GATEWAY
             )
+
+    def _log_request_history(self, request, workspace_id, url, method, headers, body, response_status, response_time):
+        print(f"DEBUG: _log_request_history called: user={request.user}, authenticated={getattr(request.user, 'is_authenticated', False)}, workspace_id={workspace_id}")
+        if request.user and request.user.is_authenticated and workspace_id:
+            try:
+                from apps.workspaces.models import Workspace
+                from apps.history.models import RequestHistory
+                workspace = Workspace.objects.filter(
+                    models.Q(owner=request.user) |
+                    models.Q(memberships__user=request.user)
+                ).distinct().filter(id=workspace_id).first()
+                print(f"DEBUG: workspace found: {workspace}")
+
+                if workspace:
+                    history_entry = RequestHistory.objects.create(
+                        workspace=workspace,
+                        user=request.user,
+                        url=url,
+                        method=method,
+                        headers=headers,
+                        body=body if isinstance(body, str) else str(body) if body is not None else None,
+                        response_status=response_status,
+                        response_time=response_time
+                    )
+                    print(f"DEBUG: RequestHistory entry created: {history_entry.id}")
+            except Exception as e:  # nosec B110
+                print(f"DEBUG: Exception in _log_request_history: {e}")
+                pass
 
 
 class CollectionRequestViewSet(viewsets.ModelViewSet):

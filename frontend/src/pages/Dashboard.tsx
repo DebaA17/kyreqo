@@ -14,6 +14,9 @@ import {
   substituteVariablesInObject,
   getActiveVariables,
 } from '../utils/variables';
+import HistorySidebar from '../components/HistorySidebar';
+import { RequestHistory } from '../types/history';
+import useHistoryStore from '../store/historyStore';
 
 interface RequestHeader {
   key: string;
@@ -22,6 +25,9 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'collections' | 'history'>(
+    'collections'
+  );
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
@@ -74,6 +80,28 @@ export default function Dashboard() {
       }
     } catch (err) {
       alert('Failed to save request.');
+    }
+  };
+
+  const handleHistorySelect = (history: RequestHistory) => {
+    setMethod(history.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
+    setUrl(history.url);
+
+    if (history.headers) {
+      const headerEntries = Object.entries(history.headers);
+      if (headerEntries.length > 0) {
+        setHeaders(
+          headerEntries.map(([key, value]) => ({
+            key,
+            value: String(value),
+            enabled: true,
+          }))
+        );
+      }
+    }
+
+    if (history.body) {
+      setBody(history.body);
     }
   };
 
@@ -130,14 +158,23 @@ export default function Dashboard() {
       }
 
       const proxyUrl = `/api/requests/proxy/`;
+      const accessToken = localStorage.getItem('accessToken');
+      const proxyHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (accessToken) {
+        proxyHeaders['Authorization'] = `Bearer ${accessToken}`;
+      }
+
       const proxyResponse = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: proxyHeaders,
         body: JSON.stringify({
           url: finalUrl,
           method,
           headers: reqHeaders,
           body: finalBody || null,
+          workspace: currentWorkspaceId,
         }),
       });
 
@@ -157,6 +194,10 @@ export default function Dashboard() {
         time: duration,
         size: sizeBytes,
       });
+
+      if (currentWorkspaceId) {
+        useHistoryStore.getState().fetchHistory(currentWorkspaceId);
+      }
     } catch (error: unknown) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -222,27 +263,59 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
-            <CollectionsExplorer
-              workspaceId={currentWorkspaceId || ''}
-              onSelectRequest={req => {
-                setUrl(req.url);
-                setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
-                const reqHeaders: RequestHeader[] = Object.entries(req.headers || {}).map(
-                  ([key, value]) => ({
-                    key,
-                    value: String(value),
-                    enabled: true,
-                  })
-                );
-                if (reqHeaders.length === 0) {
-                  reqHeaders.push({ key: '', value: '', enabled: true });
-                }
-                setHeaders(reqHeaders);
-                setBody(
-                  typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2) || ''
-                );
-              }}
-            />
+            <div className="flex border-b border-zinc-800 mb-2">
+              <button
+                className={`flex-1 py-1.5 text-xs font-semibold transition ${
+                  activeSidebarTab === 'collections'
+                    ? 'text-indigo-400 border-b-2 border-indigo-500'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                onClick={() => setActiveSidebarTab('collections')}
+              >
+                Collections
+              </button>
+              <button
+                className={`flex-1 py-1.5 text-xs font-semibold transition ${
+                  activeSidebarTab === 'history'
+                    ? 'text-indigo-400 border-b-2 border-indigo-500'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                onClick={() => setActiveSidebarTab('history')}
+              >
+                History
+              </button>
+            </div>
+
+            {activeSidebarTab === 'collections' ? (
+              <CollectionsExplorer
+                workspaceId={currentWorkspaceId || ''}
+                onSelectRequest={req => {
+                  setUrl(req.url);
+                  setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
+                  const reqHeaders: RequestHeader[] = Object.entries(req.headers || {}).map(
+                    ([key, value]) => ({
+                      key,
+                      value: String(value),
+                      enabled: true,
+                    })
+                  );
+                  if (reqHeaders.length === 0) {
+                    reqHeaders.push({ key: '', value: '', enabled: true });
+                  }
+                  setHeaders(reqHeaders);
+                  setBody(
+                    typeof req.body === 'string'
+                      ? req.body
+                      : JSON.stringify(req.body, null, 2) || ''
+                  );
+                }}
+              />
+            ) : (
+              <HistorySidebar
+                workspaceId={currentWorkspaceId || ''}
+                onSelectHistory={handleHistorySelect}
+              />
+            )}
           </div>
 
           <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
