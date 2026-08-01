@@ -5,6 +5,7 @@ from datetime import timedelta
 import dotenv
 
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
+    'health_check',
+    'health_check.db',
     
     
     'apps.accounts',
@@ -220,3 +223,8 @@ if not DEBUG:
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
     X_FRAME_OPTIONS = 'DENY'
 
+
+HEALTH_CHECK = {
+    'DISK_USAGE_MAX': 90,
+    'MEMORY_MIN': 100,
+}
