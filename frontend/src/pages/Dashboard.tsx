@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Play, Terminal, HelpCircle, Shield, Folder } from 'lucide-react';
+import { Send, Play, Terminal, HelpCircle, Shield, Folder, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -28,6 +28,7 @@ interface RequestHeader {
 export default function Dashboard() {
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [activeSidebarTab, setActiveSidebarTab] = useState<'collections' | 'history'>(
     'collections'
   );
@@ -60,7 +61,12 @@ export default function Dashboard() {
     url: string;
     headers: RequestHeader[];
     body: string;
-  } | null>(null);
+  }>({
+    method: 'GET',
+    url: 'https://jsonplaceholder.typicode.com/todos/1',
+    headers: [{ key: 'Content-Type', value: 'application/json', enabled: true }],
+    body: '{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}',
+  });
 
   const handleSaveRequest = async () => {
     if (!saveRequestName.trim() || !saveCollectionId) return;
@@ -137,6 +143,14 @@ export default function Dashboard() {
     const startTime = Date.now();
 
     try {
+      // Save last request for restore (deep copy headers, save template URL)
+      setLastRequest({
+        method: method,
+        url: url,
+        headers: headers.map(h => ({ ...h })),
+        body: body || '',
+      });
+
       const activeVariables = getActiveVariables(environments, activeEnvironmentId);
 
       const reqHeaders: Record<string, string> = {};
@@ -206,13 +220,6 @@ export default function Dashboard() {
         size: sizeBytes,
       });
       saveUrlToHistory(finalUrl);
-      // Save last request for restore
-      setLastRequest({
-        method: method,
-        url: finalUrl,
-        headers: headers,
-        body: finalBody || '',
-      });
 
       if (currentWorkspaceId) {
         useHistoryStore.getState().fetchHistory(currentWorkspaceId);
@@ -242,6 +249,8 @@ export default function Dashboard() {
     setUrl(lastRequest.url);
     setHeaders(lastRequest.headers);
     setBody(lastRequest.body);
+    setShowUrlSuggestions(false);
+    setActiveSuggestionIndex(-1);
   };
 
   // Load URL history from localStorage on mount
@@ -305,16 +314,20 @@ export default function Dashboard() {
     }
 
     // Filter suggestions based on input
-    const filtered = urls.filter(u => u.toLowerCase().includes(value.toLowerCase()));
+    const filtered = value.trim()
+      ? urls.filter(u => u.toLowerCase().includes(value.toLowerCase()))
+      : urls;
 
     setUrlSuggestions(filtered);
-    setShowUrlSuggestions(value.length > 0 && filtered.length > 0);
+    setShowUrlSuggestions(filtered.length > 0);
+    setActiveSuggestionIndex(-1);
   };
 
   // Handle suggestion click
   const handleSuggestionClick = (suggestion: string) => {
     setUrl(suggestion);
     setShowUrlSuggestions(false);
+    setActiveSuggestionIndex(-1);
   };
 
   // Keyboard Shortcuts
@@ -327,13 +340,18 @@ export default function Dashboard() {
         }
       }
 
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.shiftKey &&
-        (event.key === 'H' || event.key === 'h')
-      ) {
-        event.preventDefault();
-        setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
+      if (event.key === 'h' || event.key === 'H') {
+        const activeEl = document.activeElement;
+        const isInputFocused =
+          activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.getAttribute('contenteditable') === 'true');
+
+        if (!isInputFocused) {
+          event.preventDefault();
+          setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
+        }
       }
     };
 
@@ -546,12 +564,55 @@ export default function Dashboard() {
                       } catch {
                         urls = [];
                       }
-                      if (urls.length > 0 && url.length > 0) {
-                        const filtered = urls.filter(u =>
-                          u.toLowerCase().includes(url.toLowerCase())
-                        );
-                        setUrlSuggestions(filtered);
-                        setShowUrlSuggestions(filtered.length > 0);
+                      const filtered = url.trim()
+                        ? urls.filter(u => u.toLowerCase().includes(url.toLowerCase()))
+                        : urls;
+                      setUrlSuggestions(filtered);
+                      setShowUrlSuggestions(filtered.length > 0);
+                    }}
+                    onKeyDown={e => {
+                      if (showUrlSuggestions && urlSuggestions.length > 0) {
+                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                          e.preventDefault();
+                          setActiveSuggestionIndex(prev =>
+                            prev < urlSuggestions.length - 1 ? prev + 1 : 0
+                          );
+                          return;
+                        }
+                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                          e.preventDefault();
+                          setActiveSuggestionIndex(prev =>
+                            prev > 0 ? prev - 1 : urlSuggestions.length - 1
+                          );
+                          return;
+                        }
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (
+                            activeSuggestionIndex >= 0 &&
+                            activeSuggestionIndex < urlSuggestions.length
+                          ) {
+                            handleSuggestionClick(urlSuggestions[activeSuggestionIndex]);
+                          } else {
+                            if (!loading) {
+                              handleSend();
+                            }
+                          }
+                          return;
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setShowUrlSuggestions(false);
+                          setActiveSuggestionIndex(-1);
+                          return;
+                        }
+                      } else {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (!loading) {
+                            handleSend();
+                          }
+                        }
                       }
                     }}
                     onBlur={() => {
@@ -559,8 +620,31 @@ export default function Dashboard() {
                       setTimeout(() => setShowUrlSuggestions(false), 200);
                     }}
                     placeholder="https://api.example.com/endpoint"
-                    className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+                    className="w-full pl-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
                   />
+
+                  {url && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUrl('');
+                        const saved = localStorage.getItem('urlHistory');
+                        let urls: string[] = [];
+                        try {
+                          urls = saved ? JSON.parse(saved) : [];
+                        } catch {
+                          urls = [];
+                        }
+                        setUrlSuggestions(urls);
+                        setShowUrlSuggestions(urls.length > 0);
+                        setActiveSuggestionIndex(-1);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition p-1"
+                      title="Clear URL"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
 
                   {/* Suggestions Dropdown */}
                   {showUrlSuggestions && urlSuggestions.length > 0 && (
@@ -568,8 +652,13 @@ export default function Dashboard() {
                       {urlSuggestions.map((suggestion, index) => (
                         <div
                           key={index}
-                          className="px-4 py-2 hover:bg-zinc-800 cursor-pointer text-sm text-zinc-300 transition"
+                          className={`px-4 py-2 cursor-pointer text-sm transition ${
+                            index === activeSuggestionIndex
+                              ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                              : 'hover:bg-zinc-800 text-zinc-300'
+                          }`}
                           onMouseDown={() => handleSuggestionClick(suggestion)}
+                          onMouseEnter={() => setActiveSuggestionIndex(index)}
                         >
                           {suggestion}
                         </div>

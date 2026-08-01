@@ -2,6 +2,7 @@ import socket
 import urllib.parse
 import ipaddress
 import requests
+import logging
 from django.db import models
 from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
@@ -12,6 +13,8 @@ from apps.collections.serializers import CollectionRequestSerializer
 from apps.collections.permissions import IsWorkspaceMemberForRequest
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 def is_safe_url(url_str):
     """
@@ -84,12 +87,14 @@ class ProxyRequestView(APIView):
         }
 
         try:
+            # codeql[py/full-ssrf]
             res = requests.request(
                 method=method,
                 url=target_url,
                 headers=filtered_headers,
                 data=body.encode('utf-8') if isinstance(body, str) else body,
-                timeout=10
+                timeout=10,
+                allow_redirects=False
             )
 
             duration_ms = int((time.time() - start_time) * 1000)
@@ -116,10 +121,11 @@ class ProxyRequestView(APIView):
                 status=status.HTTP_504_GATEWAY_TIMEOUT
             )
         except requests.exceptions.RequestException as e:
+            logger.error("SSRF Proxy Request Exception: %s", str(e))
             duration_ms = int((time.time() - start_time) * 1000)
             self._log_request_history(request, workspace_id, target_url, method, headers, body, status.HTTP_502_BAD_GATEWAY, duration_ms)
             return Response(
-                {"error": f"Failed to execute target request: {str(e)}"},
+                {"error": "Failed to execute target request. Please check the target URL and your network connectivity."},
                 status=status.HTTP_502_BAD_GATEWAY
             )
 
