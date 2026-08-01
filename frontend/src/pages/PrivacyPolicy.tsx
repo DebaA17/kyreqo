@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, Eye, ArrowLeft, FileText } from 'lucide-react';
+import { Shield, Lock, Eye, ArrowLeft, FileText, Github, Bug, Heart } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -28,9 +28,9 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
         </div>
-        <p className="text-xs text-zinc-500 mb-8">Last Updated: July 27, 2026</p>
+        <p className="text-xs text-zinc-500 mb-8">Last Updated: July 31, 2026</p>
 
-        {}
+        {/* Intro */}
         <div className="p-4 bg-zinc-950/40 border border-zinc-900 rounded-xl mb-8">
           <p className="text-sm text-zinc-300 leading-relaxed">
             Kyreqo is built with a security-first architecture. This Privacy Policy details how we
@@ -39,9 +39,9 @@ export default function PrivacyPolicy() {
           </p>
         </div>
 
-        {}
+        {/* Content */}
         <div className="space-y-8">
-          {}
+          {/* Section 1 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Eye className="h-4 w-4 text-indigo-400" />
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
             </div>
           </section>
 
-          {}
+          {/* Section 2 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Shield className="h-4 w-4 text-emerald-400" />
@@ -70,13 +70,14 @@ export default function PrivacyPolicy() {
             </h2>
             <p className="pl-6 text-sm text-zinc-400 leading-relaxed">
               To defend our platform infrastructure, our backend executes DNS lookups and IP range
-              checking on every request. We log metadata of incoming connections (such as IP
-              addresses, timestamps, and target hostnames) strictly for threat analysis, security
-              debugging, and system maintenance.
+              checking on every request. We log metadata of incoming connections and system actions
+              (such as IP addresses, user device info, IP-based info/location, ISP details,
+              timestamps, login attempt records, and target hostnames) strictly for threat analysis,
+              security debugging, and system maintenance.
             </p>
           </section>
 
-          {}
+          {/* Section 3 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <Lock className="h-4 w-4 text-violet-400" />
@@ -96,20 +97,66 @@ export default function PrivacyPolicy() {
             </div>
           </section>
 
-          {}
+          {/* Section 4 */}
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-zinc-100">4. Contact Information</h2>
+            <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-amber-400" />
+              4. Changes to this Policy
+            </h2>
             <p className="pl-6 text-sm text-zinc-400 leading-relaxed">
-              If you have any security or privacy questions regarding our sandbox engine routing,
-              please open an issue in the Kyreqo GitHub repository.
+              We reserve the right to update, modify, or change this Privacy Policy at any time and
+              for any reason without prior notice. Your continued use of the platform constitutes
+              agreement to the current terms.
             </p>
+          </section>
+
+          {/* Section 5 */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <Github className="h-5 w-5 text-indigo-400" />
+              5. Open Source & Community Contribution
+            </h2>
+            <p className="pl-6 text-sm text-zinc-400 leading-relaxed">
+              Kyreqo is an open-source project. We welcome developer contributions, bug reports, and
+              new feature requests to make API testing simpler and more secure for everyone.
+            </p>
+            <div className="pl-6 pt-2 flex flex-wrap gap-4">
+              <a
+                href="https://github.com/DebaA17/kyreqo/security/advisories/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/25 rounded-lg transition"
+              >
+                <Shield className="h-4 w-4" />
+                Report Security Issue Privately
+              </a>
+              <a
+                href="https://github.com/DebaA17/kyreqo/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition"
+              >
+                <Bug className="h-4 w-4 text-zinc-400" />
+                Report Bug / Request Feature
+              </a>
+              <a
+                href="https://github.com/DebaA17/kyreqo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition"
+              >
+                <Heart className="h-4 w-4 text-rose-400" />
+                Contribute on GitHub
+              </a>
+            </div>
           </section>
         </div>
 
         {}
         <div className="mt-12 pt-6 border-t border-zinc-900 text-center">
           <p className="text-[10px] text-zinc-600">
-            &copy; 2026 Kyreqo. Designed for secure, sandboxed API workspace management.
+            &copy; {new Date().getFullYear()} Kyreqo. Designed for secure, sandboxed API workspace
+            management.
           </p>
         </div>
       </div>

@@ -121,7 +121,7 @@ class ProxyRequestView(APIView):
                 status=status.HTTP_504_GATEWAY_TIMEOUT
             )
         except requests.exceptions.RequestException as e:
-            logger.error("SSRF Proxy Request Exception: %s", str(e))
+            logger.error("RequestException encountered during proxy request: %s", str(e), exc_info=True)
             duration_ms = int((time.time() - start_time) * 1000)
             self._log_request_history(request, workspace_id, target_url, method, headers, body, status.HTTP_502_BAD_GATEWAY, duration_ms)
             return Response(
