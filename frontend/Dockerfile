@@ -1,32 +1,26 @@
 # ============================================
 # STAGE 1: Build Stage
 # ============================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files for better caching
-COPY frontend/package.json ./
-COPY pnpm-lock.yaml ./
-
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Install dependencies
-RUN pnpm install --no-frozen-lockfile
+# Copy workspace and lock files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY frontend/package.json ./frontend/
 
-# Install TypeScript globally 
-RUN npm install -g typescript
+# Install dependencies using workspace filter
+RUN pnpm install --filter kyreqo-frontend... --no-frozen-lockfile
 
-# Copy the rest of the frontend code
-COPY frontend/ .
-
-#Install TypeScript locally 
-RUN pnpm add -D typescript
+# Copy frontend source code
+COPY frontend/ ./frontend/
 
 # Build the Vite application
-RUN pnpm build
+RUN pnpm --filter kyreqo-frontend build
 
 
 # ============================================
@@ -35,7 +29,7 @@ RUN pnpm build
 FROM nginx:alpine AS production
 
 # Copy the built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
