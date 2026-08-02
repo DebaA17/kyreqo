@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  db:
+    image: postgres:15-alpine
+    container_name: kyreqo_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kyreqo_user
+      POSTGRES_PASSWORD: kyreqo_password
+      POSTGRES_DB: kyreqo_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kyreqo_user -d kyreqo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kyreqo_network
+
+  # ============================================
+  # Backend (Django)
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: kyreqo_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://kyreqo_user:kyreqo_password@db:5432/kyreqo_db
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-dev-key-change-in-production}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: localhost,127.0.0.1,backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput --clear&&
+             gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 config.wsgi:application"
+    networks:
+      - kyreqo_network
+
+  # ============================================
+  # Frontend (React/Vite + Nginx)
+  # ============================================
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: kyreqo_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - kyreqo_network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  kyreqo_network:
+    driver: bridge

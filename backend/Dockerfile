@@ -53,7 +53,9 @@ COPY backend/ .
 # Create a non-root user and switch to it
 RUN addgroup --system --gid 1001 appgroup && \
     adduser --system --uid 1001 --gid 1001 appuser && \
-    chown -R appuser:appgroup /app
+    chown -R appuser:appgroup /app && \
+    mkdir -p /app/staticfiles && \
+    chown -R appuser:appgroup /app/staticfiles
 USER appuser
 
 # Expose port
