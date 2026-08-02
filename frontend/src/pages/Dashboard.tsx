@@ -820,8 +820,10 @@ export default function Dashboard() {
                         onClick={async () => {
                           try {
                             await navigator.clipboard.writeText(
-                typeof response === 'string' ? response : JSON.stringify(response, null, 2)
-              );
+                              typeof response === 'string'
+                                ? response
+                                : JSON.stringify(response, null, 2)
+                            );
                             setIsCopied(true);
                             setTimeout(() => setIsCopied(false), 2000);
                           } catch (err) {
@@ -864,26 +866,26 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
-  {response ? (
-    <pre className="flex-1 p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
-    </pre>
-  ) : loading ? (
-    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
-      <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
-      Retrieving target response...
-    </div>
-  ) : (
-    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-6">
-      <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
-      <p className="font-semibold text-zinc-400">Response is empty</p>
-      <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
-        Enter a URL and click Send above to run an API request through the Kyreqo
-        engine.
-      </p>
-    </div>
-  )}
-</div>
+                  {response ? (
+                    <pre className="flex-1 p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
+                    </pre>
+                  ) : loading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
+                      <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
+                      Retrieving target response...
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-6">
+                      <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
+                      <p className="font-semibold text-zinc-400">Response is empty</p>
+                      <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
+                        Enter a URL and click Send above to run an API request through the Kyreqo
+                        engine.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
