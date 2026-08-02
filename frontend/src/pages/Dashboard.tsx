@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Play, Terminal, HelpCircle, Shield, Folder, X } from 'lucide-react';
+import { Send, Play, Terminal, HelpCircle, Shield, Folder, X, Copy, Check } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -26,6 +26,7 @@ interface RequestHeader {
 }
 
 export default function Dashboard() {
+  const [isCopied, setIsCopied] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -227,11 +228,17 @@ export default function Dashboard() {
     } catch (error: unknown) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      setResponse({
-        error: 'Failed to fetch response.',
-        message: errorMessage,
-        tip: 'If you are targeting local/private services, remember SSRF limits apply. If backend proxy is not started yet, browser CORS restrictions might block direct requests.',
-      });
+      setResponse(
+        JSON.stringify(
+          {
+            error: 'Failed to fetch response.',
+            message: errorMessage,
+            tip: 'If you are targeting local/private services, remember SSRF limits apply. If backend proxy is not started yet, browser CORS restrictions might block direct requests.',
+          },
+          null,
+          2
+        )
+      );
       setStatusInfo({
         code: 0,
         time: Date.now() - startTime,
@@ -804,16 +811,47 @@ export default function Dashboard() {
               {}
               <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
                 <div className="flex items-center justify-between mb-3 gap-2">
-                  <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
-                    Response Console
-                  </span>
-
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
+                      Response Console
+                    </span>
+                    {response !== null && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(
+                              typeof response === 'string'
+                                ? response
+                                : JSON.stringify(response, null, 2)
+                            );
+                            setIsCopied(true);
+                            setTimeout(() => setIsCopied(false), 2000);
+                          } catch (err) {
+                            console.error('Failed to copy:', err);
+                          }
+                        }}
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                      >
+                        {isCopied ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-400" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            Copy
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   {statusInfo && (
                     <div className="flex gap-2 flex-wrap justify-end">
                       <span
                         className={`text-xs px-2.5 py-0.5 rounded font-bold flex items-center gap-1
-                      ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
-                    `}
+        ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
+      `}
                       >
                         {statusInfo.code === 0 ? 'FAIL' : statusInfo.code}
                       </span>
@@ -830,7 +868,7 @@ export default function Dashboard() {
                 <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
                   {response ? (
                     <pre className="flex-1 p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                      {JSON.stringify(response, null, 2)}
+                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
                     </pre>
                   ) : loading ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
