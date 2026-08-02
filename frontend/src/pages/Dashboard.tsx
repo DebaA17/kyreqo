@@ -46,7 +46,7 @@ export default function Dashboard() {
   ]);
   const [body, setBody] = useState('{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}');
   const [activeTab, setActiveTab] = useState<'params' | 'headers' | 'body' | 'auth'>('headers');
-  const [response, setResponse] = useState<string | null>(null);
+  const [response, setResponse] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [statusInfo, setStatusInfo] = useState<{ code: number; time: number; size: number } | null>(
     null
@@ -815,7 +815,7 @@ export default function Dashboard() {
                     <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
                       Response Console
                     </span>
-                    {response && (
+                    {response !== null && (
                       <button
                         onClick={async () => {
                           try {
