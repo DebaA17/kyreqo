@@ -71,12 +71,21 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
       .map(item => {
         // Check if current item matches
         const nameMatches = item.name.toLowerCase().includes(lowerQuery);
-        // Recursively filter children
+        // Check if any requests inside this item match
+        const filteredRequests = (item.requests || []).filter(req =>
+          req.name.toLowerCase().includes(lowerQuery)
+        );
+        // Recursively filter children (subfolders)
         const filteredChildren = filterTree(item.children, query);
-        // Keep item if name matches OR it has matching children
-        if (nameMatches || filteredChildren.length > 0) {
+
+        // Keep item if:
+        // 1. Folder name matches, OR
+        // 2. Any subfolder matches, OR
+        // 3. Any request inside this folder matches
+        if (nameMatches || filteredChildren.length > 0 || filteredRequests.length > 0) {
           return {
             ...item,
+            requests: nameMatches ? item.requests : filteredRequests,
             children: nameMatches ? item.children : filteredChildren,
           };
         }
@@ -152,7 +161,7 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
       const hasSubfolders = item.children && item.children.length > 0;
       const hasRequests = item.requests && item.requests.length > 0;
       const hasChildren = hasSubfolders || hasRequests;
-      const isExpanded = expandedFolders.has(item.id);
+      const isExpanded = searchQuery.trim() !== '' || expandedFolders.has(item.id);
 
       return (
         <div key={item.id} style={{ paddingLeft: `${level * 12}px` }}>
