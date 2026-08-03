@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FolderPlus, FilePlus, ChevronRight, ChevronDown, Folder, Trash2 } from 'lucide-react';
+import {
+  FolderPlus,
+  FilePlus,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import useCollectionStore, { Collection, SavedRequest } from '../store/collectionStore';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../api/client';
@@ -24,6 +32,7 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [parentId, setParentId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [newRequestName, setNewRequestName] = useState('');
@@ -51,6 +60,30 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
   };
 
   const treeData = buildTree(null);
+
+  // Filter tree based on search query
+  const filterTree = (items: TreeNode[], query: string): TreeNode[] => {
+    if (!query.trim()) return items;
+
+    const lowerQuery = query.toLowerCase();
+
+    return items
+      .map(item => {
+        // Check if current item matches
+        const nameMatches = item.name.toLowerCase().includes(lowerQuery);
+        // Recursively filter children
+        const filteredChildren = filterTree(item.children, query);
+        // Keep item if name matches OR it has matching children
+        if (nameMatches || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: nameMatches ? item.children : filteredChildren,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as TreeNode[];
+  };
 
   const toggleFolder = (id: number) => {
     setExpandedFolders(prev => {
@@ -264,6 +297,18 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
         )}
       </div>
 
+      {/* Search Input */}
+      <div className="relative mb-2">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search collections..."
+          className="w-full pl-8 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+        />
+      </div>
+
       {}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
@@ -279,7 +324,20 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
             </p>
           </div>
         ) : (
-          <div className="space-y-0.5">{renderTree(treeData)}</div>
+          <div className="space-y-0.5">
+            {(() => {
+              const filteredData = filterTree(treeData, searchQuery);
+              if (filteredData.length === 0 && searchQuery.trim() !== '') {
+                return (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-xs text-zinc-400 font-medium">No collections found</p>
+                    <p className="text-[10px] text-zinc-600 mt-1">Try a different search term</p>
+                  </div>
+                );
+              }
+              return renderTree(filteredData);
+            })()}
+          </div>
         )}
       </div>
 
