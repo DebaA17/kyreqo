@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Play, Terminal, HelpCircle, Shield, Folder, X, Copy, Check } from 'lucide-react';
+import {
+  Send,
+  Play,
+  Terminal,
+  HelpCircle,
+  Shield,
+  Folder,
+  X,
+  Copy,
+  Check,
+  Sparkles,
+  AlertCircle,
+} from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -33,6 +45,7 @@ export default function Dashboard() {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'collections' | 'history'>(
     'collections'
   );
+  const [prettifyError, setPrettifyError] = useState<string | null>(null);
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
@@ -136,7 +149,23 @@ export default function Dashboard() {
     updated[index] = { ...updated[index], [field]: val } as RequestHeader;
     setHeaders(updated);
   };
+  const handlePrettifyJson = () => {
+    if (!body || body.trim() === '') {
+      setPrettifyError('No JSON to prettify');
+      setTimeout(() => setPrettifyError(null), 2000);
+      return;
+    }
 
+    try {
+      const parsed = JSON.parse(body);
+      const prettified = JSON.stringify(parsed, null, 2);
+      setBody(prettified);
+      setPrettifyError(null);
+    } catch (error) {
+      setPrettifyError('Invalid JSON format');
+      setTimeout(() => setPrettifyError(null), 3000);
+    }
+  };
   const handleSend = useCallback(async () => {
     setLoading(true);
     setResponse(null);
@@ -790,11 +819,30 @@ export default function Dashboard() {
                   <div className="flex-1 flex flex-col min-h-0 gap-2">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
-                      <span className="text-[10px] text-zinc-500">raw (application/json)</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrettifyJson}
+                          className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                          title="Prettify JSON"
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          Prettify
+                        </button>
+                        <span className="text-[10px] text-zinc-500">raw (application/json)</span>
+                      </div>
                     </div>
+                    {prettifyError && (
+                      <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-400/10 border border-amber-400/20 rounded px-2 py-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {prettifyError}
+                      </div>
+                    )}
                     <textarea
                       value={body}
-                      onChange={e => setBody(e.target.value)}
+                      onChange={e => {
+                        setBody(e.target.value);
+                        setPrettifyError(null);
+                      }}
                       className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
                     />
                   </div>
