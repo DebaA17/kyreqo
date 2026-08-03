@@ -85,7 +85,7 @@ export default function Register() {
         avatar: finalAvatar,
         turnstile_token: turnstileToken || '',
       });
-      navigate('/', { replace: true });
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`, { replace: true });
     } catch (err) {
       void err;
     }

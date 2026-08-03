@@ -88,8 +88,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           body: JSON.stringify(data),
           skipAuth: true,
         });
-
-        await get().login(data.email, data.password);
+        set({ isLoading: false });
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Registration failed. Please check your details.';

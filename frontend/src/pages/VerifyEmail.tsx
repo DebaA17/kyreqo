@@ -9,7 +9,7 @@ export default function VerifyEmail() {
   const initialEmail = searchParams.get('email') || '';
 
   const { loadProfile, accessToken } = useAuthStore();
-  const [email, setEmail] = useState(initialEmail);
+  const [email] = useState(initialEmail);
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,6 +90,10 @@ export default function VerifyEmail() {
             Verify Email
           </h1>
           <p className="text-xs text-zinc-500 font-medium mt-1 uppercase">Account Activation</p>
+          <p className="text-xs text-zinc-400 text-center mt-4 max-w-xs leading-relaxed">
+            We have sent a 6-digit verification code to your email. Please check your inbox (and
+            spam folder).
+          </p>
         </div>
 
         {status === 'loading' && (
@@ -131,10 +135,10 @@ export default function VerifyEmail() {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                readOnly
                 placeholder="you@example.com"
                 required
-                className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+                className="w-full px-4 py-3 bg-zinc-950/40 border border-zinc-900 rounded-xl text-sm text-zinc-500 cursor-not-allowed focus:outline-none transition"
               />
             </div>
 
