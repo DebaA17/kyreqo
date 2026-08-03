@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def verify_existing_users(apps, schema_editor):
+    CustomUser = apps.get_model('accounts', 'CustomUser')
+    CustomUser.objects.all().update(email_verified=True)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -30,4 +35,5 @@ class Migration(migrations.Migration):
             name='verification_otp',
             field=models.CharField(blank=True, max_length=6, null=True),
         ),
+        migrations.RunPython(verify_existing_users),
     ]
