@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        import uuid
+        import secrets
         validated_data.pop('password_confirm')
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -33,7 +33,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             avatar=validated_data.get('avatar', None),
             email_verified=False,
-            verification_token=uuid.uuid4().hex
+            verification_otp=f"{secrets.SystemRandom().randint(100000, 999999)}"
         )
         return user
 

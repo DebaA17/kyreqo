@@ -130,31 +130,18 @@ class VerifyEmailView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     throttle_scope = 'auth'
 
-    def get(self, request, *args, **kwargs):
-        token = request.query_params.get('token')
-        if not token:
-            return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = User.objects.filter(verification_token=token).first()
-        if not user:
-            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user.email_verified = True
-        user.verification_token = None
-        user.save()
-        return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
-
     def post(self, request, *args, **kwargs):
-        token = request.data.get('token')
-        if not token:
-            return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        if not email or not otp:
+            return Response({"detail": "Email and verification code are required."}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = User.objects.filter(verification_token=token).first()
+        user = User.objects.filter(email=email, verification_otp=otp).first()
         if not user:
-            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
         
         user.email_verified = True
-        user.verification_token = None
+        user.verification_otp = None
         user.save()
         return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
 
@@ -179,8 +166,9 @@ class ResendVerificationView(generics.GenericAPIView):
         if user.email_verified:
             return Response({"detail": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
             
-        # Re-generate verification token and send
-        user.verification_token = uuid.uuid4().hex
+        # Re-generate verification OTP and send
+        import secrets
+        user.verification_otp = f"{secrets.SystemRandom().randint(100000, 999999)}"
         user.save()
         
         try:

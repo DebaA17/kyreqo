@@ -443,7 +443,13 @@ export default function Dashboard() {
             <AlertCircle className="h-4 w-4 text-amber-400 flex-shrink-0" />
             <span>
               Please verify your email address to unlock full features (sending requests, managing
-              workspaces, collections, etc.).
+              workspaces, collections, etc.).{' '}
+              <Link
+                to={`/verify-email?email=${encodeURIComponent(user.email)}`}
+                className="underline hover:text-amber-300 font-bold transition ml-1"
+              >
+                Enter Code
+              </Link>
             </span>
           </div>
           <button

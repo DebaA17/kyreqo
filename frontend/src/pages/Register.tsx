@@ -33,7 +33,7 @@ export default function Register() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const { register, isLoading, error, isAuthenticated, clearError } = useAuthStore();
+  const { register, isLoading, error, isAuthenticated, clearError, user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,9 +43,13 @@ export default function Register() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      if (user && !user.email_verified) {
+        navigate(`/verify-email?email=${encodeURIComponent(user.email)}`, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

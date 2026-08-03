@@ -46,7 +46,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     avatar = models.URLField(max_length=500, blank=True, null=True, validators=[validate_avatar_url])
     email_verified = models.BooleanField(default=False)
-    verification_token = models.CharField(max_length=64, blank=True, null=True, unique=True)
+    verification_otp = models.CharField(max_length=6, blank=True, null=True)
     password_reset_token = models.CharField(max_length=64, blank=True, null=True, unique=True)
     password_reset_token_created_at = models.DateTimeField(blank=True, null=True)
 

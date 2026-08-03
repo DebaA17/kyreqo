@@ -33,16 +33,14 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 def send_verification_email(user):
-    token = user.verification_token
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-    verification_link = f"{frontend_url}/verify-email?token={token}"
+    otp = user.verification_otp
     
     subject = "Verify your Kyreqo account"
     message = f"""Hi {user.first_name or 'User'},
 
-Welcome to Kyreqo! Please verify your email address by clicking the link below:
+Welcome to Kyreqo! Please verify your email address by entering the following 6-digit verification code:
 
-{verification_link}
+{otp}
 
 If you did not create an account, please ignore this email.
 

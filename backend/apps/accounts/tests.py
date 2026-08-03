@@ -163,34 +163,36 @@ class AccountsAPITests(APITestCase):
         
         user = User.objects.get(email=self.user_data['email'])
         self.assertFalse(user.email_verified)
-        self.assertIsNotNone(user.verification_token)
+        self.assertIsNotNone(user.verification_otp)
+        self.assertEqual(len(user.verification_otp), 6)
 
     def test_verify_email_success(self):
         # Register user
         self.client.post(self.register_url, self.user_data, format='json')
         user = User.objects.get(email=self.user_data['email'])
-        token = user.verification_token
+        otp = user.verification_otp
 
         verify_url = reverse('accounts:verify_email')
-        response = self.client.post(verify_url, {"token": token}, format='json')
+        response = self.client.post(verify_url, {"email": user.email, "otp": otp}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         user.refresh_from_db()
         self.assertTrue(user.email_verified)
-        self.assertIsNone(user.verification_token)
+        self.assertIsNone(user.verification_otp)
 
     def test_resend_verification_success(self):
         # Register user
         self.client.post(self.register_url, self.user_data, format='json')
         user = User.objects.get(email=self.user_data['email'])
-        original_token = user.verification_token
+        original_otp = user.verification_otp
 
         resend_url = reverse('accounts:resend_verification')
         response = self.client.post(resend_url, {"email": user.email}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         user.refresh_from_db()
-        self.assertNotEqual(user.verification_token, original_token)
+        self.assertNotEqual(user.verification_otp, original_otp)
+        self.assertEqual(len(user.verification_otp), 6)
 
     def test_forgot_password_success(self):
         user = User.objects.create_user(
