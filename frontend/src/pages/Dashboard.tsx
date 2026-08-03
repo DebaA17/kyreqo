@@ -944,7 +944,9 @@ export default function Dashboard() {
         ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
       `}
                       >
-                        {statusInfo.code === 0 ? 'FAIL' : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
+                        {statusInfo.code === 0
+                          ? 'FAIL'
+                          : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
                       </span>
                       <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
                         {statusInfo.time} ms
