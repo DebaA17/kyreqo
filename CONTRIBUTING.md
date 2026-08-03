@@ -10,37 +10,36 @@ Kyreqo is split into:
 *   **Backend**: Django REST Framework + PostgreSQL
 *   **Frontend**: React (Vite) + TypeScript + Tailwind CSS (using **`pnpm`** as the package manager)
 
+All development scripts should be run from the repository root using the workspace shortcuts defined in the root `package.json`.
+
 ### Backend Local Setup
 
-1. **Navigate to backend and create venv**:
+1. **Create the Python virtual environment**:
    ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate
+   python3 -m venv backend/venv
    ```
 2. **Install dependencies**:
    ```bash
-   pip install -r requirements.txt
+   backend/venv/bin/pip install -r backend/requirements.txt
    ```
-3. **Run migrations and start the server**:
+3. **Run database migrations**:
    ```bash
-   python manage.py migrate
-   python manage.py runserver
+   pnpm backend:migrate
+   ```
+4. **Start the Django development server**:
+   ```bash
+   pnpm backend
    ```
 
 ### Frontend Local Setup
 
-1. **Navigate to frontend**:
-   ```bash
-   cd frontend
-   ```
-2. **Install dependencies using `pnpm`**:
+1. **Install dependencies using `pnpm`**:
    ```bash
    pnpm install
    ```
-3. **Start the development server**:
+2. **Start the frontend development server**:
    ```bash
-   pnpm dev
+   pnpm frontend
    ```
 
 ---
@@ -51,13 +50,9 @@ Security is a core focus of Kyreqo, especially preventing Server-Side Request Fo
 
 ### 1. Python Security Linter (`bandit`)
 We use `bandit` to scan Python code for security issues.
-*   **Install Bandit** (if not already installed):
-    ```bash
-    pip install bandit
-    ```
 *   **Run Bandit scan**:
     ```bash
-    bandit -r backend/
+    backend/venv/bin/bandit -r backend/apps/ -x "**/tests.py"
     ```
     *Ensure you resolve any High/Medium severity findings before creating a Pull Request.*
 

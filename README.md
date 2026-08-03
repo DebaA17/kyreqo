@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="frontend/public/favicon.png" width="90" alt="Kyreqo Logo" />
+  <img src="frontend/public/kyreqo.jpg" alt="Kyreqo Banner" />
 </p>
-
-<h1 align="center">Kyreqo</h1>
 
 <p align="center">
   A modern, open-source web-based API testing client designed for fast, safe, and collaborative API request design.
@@ -26,13 +24,6 @@
   </a>
 </p>
 
----
-
-## 🖥️ Preview
-
-![Kyreqo Dashboard Preview](frontend/public/Dashboard.png)
-
----
 
 ## ✨ Features
 
@@ -50,7 +41,9 @@ To resolve CORS and secure outgoing requests, Kyreqo routes API calls through a 
 
 Below is the request-response lifecycle:
 
-![Kyreqo Request Lifecycle](frontend/public/diagram.png)
+<p align="center">
+  <img src="frontend/public/diagram.png" width="650" alt="Kyreqo Request Lifecycle" />
+</p>
 
 ---
 
