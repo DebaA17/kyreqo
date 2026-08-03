@@ -39,6 +39,7 @@ interface RequestHeader {
 
 export default function Dashboard() {
   const [isCopied, setIsCopied] = useState(false);
+  const [resendState, setResendState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -446,20 +447,37 @@ export default function Dashboard() {
             </span>
           </div>
           <button
+            disabled={resendState === 'loading' || resendState === 'success'}
             onClick={async () => {
+              setResendState('loading');
               try {
                 await apiClient('/api/accounts/resend-verification/', {
                   method: 'POST',
                   body: JSON.stringify({ email: user.email }),
                 });
-                alert('Verification email resent successfully!');
+                setResendState('success');
+                setTimeout(() => setResendState('idle'), 5000);
               } catch (err) {
-                alert('Failed to resend verification email.');
+                setResendState('error');
+                setTimeout(() => setResendState('idle'), 5000);
               }
             }}
-            className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold rounded-lg border border-amber-500/30 transition cursor-pointer"
+            className={`px-3 py-1 font-semibold rounded-lg border transition cursor-pointer select-none flex items-center gap-1.5
+              ${resendState === 'loading' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500/50 cursor-not-allowed' : ''}
+              ${resendState === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400 cursor-default' : ''}
+              ${resendState === 'error' ? 'bg-rose-500/20 border-rose-500/30 text-rose-400' : ''}
+              ${resendState === 'idle' ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/30' : ''}
+            `}
           >
-            Resend Verification Email
+            {resendState === 'idle' && 'Resend Verification Email'}
+            {resendState === 'loading' && (
+              <>
+                <span className="h-3 w-3 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></span>
+                Sending...
+              </>
+            )}
+            {resendState === 'success' && '✓ Verification Link Sent!'}
+            {resendState === 'error' && '✗ Failed to Resend'}
           </button>
         </div>
       )}
