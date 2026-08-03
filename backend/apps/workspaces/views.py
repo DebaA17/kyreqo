@@ -15,9 +15,12 @@ class IsWorkspaceOwner(permissions.BasePermission):
         return obj.owner == request.user
 
 
+from apps.accounts.permissions import IsEmailVerified
+
+
 class WorkspaceViewSet(viewsets.ModelViewSet):
     serializer_class = WorkspaceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
 
     def get_queryset(self):
         user = self.request.user
@@ -30,8 +33,8 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:
-            return [permissions.IsAuthenticated(), IsWorkspaceOwner()]
-        return super().get_permissions()
+            return [permissions.IsAuthenticated(), IsEmailVerified(), IsWorkspaceOwner()]
+        return [permissions.IsAuthenticated(), IsEmailVerified()]
 
     
     @action(detail=True, methods=['get', 'post'], url_path='members')

@@ -30,6 +30,14 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # Send verification email
+        try:
+            from .utils import send_verification_email
+            send_verification_email(user)
+        except Exception as e:
+            print(f"Error sending verification email: {e}")
+
         user_data = UserSerializer(user).data
         return Response(user_data, status=status.HTTP_201_CREATED)
 
@@ -111,4 +119,136 @@ class AdminLoginLogListView(generics.ListAPIView):
     queryset = LoginAttempt.objects.all().order_by('-timestamp')
     serializer_class = LoginAttemptSerializer
     permission_classes = [IsAdminUser]
+
+
+import uuid
+import datetime
+from django.utils import timezone
+from .serializers import ForgotPasswordSerializer, ResetPasswordConfirmSerializer
+
+class VerifyEmailView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    throttle_scope = 'auth'
+
+    def get(self, request, *args, **kwargs):
+        token = request.query_params.get('token')
+        if not token:
+            return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = User.objects.filter(verification_token=token).first()
+        if not user:
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.email_verified = True
+        user.verification_token = None
+        user.save()
+        return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        if not token:
+            return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = User.objects.filter(verification_token=token).first()
+        if not user:
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.email_verified = True
+        user.verification_token = None
+        user.save()
+        return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+
+class ResendVerificationView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email and request.user.is_authenticated:
+            email = request.user.email
+        
+        if not email:
+            return Response({"detail": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = User.objects.filter(email=email).first()
+        if not user:
+            # Standard security practice: return success status to prevent user enumeration
+            return Response({"detail": "Verification email resent if the account exists."}, status=status.HTTP_200_OK)
+            
+        if user.email_verified:
+            return Response({"detail": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Re-generate verification token and send
+        user.verification_token = uuid.uuid4().hex
+        user.save()
+        
+        try:
+            from .utils import send_verification_email
+            send_verification_email(user)
+        except Exception as e:
+            print(f"Error resending verification email: {e}")
+            return Response({"detail": "Failed to send email. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response({"detail": "Verification email resent successfully."}, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ForgotPasswordSerializer
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        user = User.objects.filter(email=email).first()
+        if user:
+            user.password_reset_token = uuid.uuid4().hex
+            user.password_reset_token_created_at = timezone.now()
+            user.save()
+
+            try:
+                from .utils import send_password_reset_email
+                send_password_reset_email(user)
+            except Exception as e:
+                print(f"Error sending password reset email: {e}")
+                return Response({"detail": "Failed to send email. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Always return success status to prevent user enumeration
+        return Response(
+            {"detail": "If your email is registered with us, you will receive a password reset link shortly."},
+            status=status.HTTP_200_OK
+        )
+
+
+class ResetPasswordConfirmView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResetPasswordConfirmSerializer
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data['token']
+        password = serializer.validated_data['password']
+
+        user = User.objects.filter(password_reset_token=token).first()
+        if not user:
+            return Response({"detail": "Invalid or expired reset token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check token expiration (1 hour)
+        expiry = user.password_reset_token_created_at + datetime.timedelta(hours=1)
+        if timezone.now() > expiry:
+            return Response({"detail": "Password reset token has expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set new password and clear token
+        user.set_password(password)
+        user.password_reset_token = None
+        user.password_reset_token_created_at = None
+        user.save()
+
+        return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+
 

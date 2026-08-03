@@ -167,6 +167,10 @@ export default function Dashboard() {
     }
   };
   const handleSend = useCallback(async () => {
+    if (user && !user.email_verified) {
+      alert('Please verify your email address to send requests.');
+      return;
+    }
     setLoading(true);
     setResponse(null);
     setStatusInfo(null);
@@ -276,7 +280,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [environments, activeEnvironmentId, headers, url, body, method, currentWorkspaceId]);
+  }, [environments, activeEnvironmentId, headers, url, body, method, currentWorkspaceId, user]);
 
   const handleRestoreLastRequest = () => {
     if (!lastRequest) return;
@@ -431,6 +435,34 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {user && !user.email_verified && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2.5 flex items-center justify-between gap-4 text-amber-400 text-xs font-medium z-20">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-400 flex-shrink-0" />
+            <span>
+              Please verify your email address to unlock full features (sending requests, managing
+              workspaces, collections, etc.).
+            </span>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                await apiClient('/api/accounts/resend-verification/', {
+                  method: 'POST',
+                  body: JSON.stringify({ email: user.email }),
+                });
+                alert('Verification email resent successfully!');
+              } catch (err) {
+                alert('Failed to resend verification email.');
+              }
+            }}
+            className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold rounded-lg border border-amber-500/30 transition cursor-pointer"
+          >
+            Resend Verification Email
+          </button>
+        </div>
+      )}
 
       {}
       <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">

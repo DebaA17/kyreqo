@@ -23,9 +23,11 @@ class IsWorkspaceMemberForHistory(permissions.BasePermission):
         is_member = workspace.memberships.filter(user=request.user).exists()
         return is_owner or is_member
 
+from apps.accounts.permissions import IsEmailVerified
+
 class HistoryViewSet(viewsets.ModelViewSet):
     serializer_class = RequestHistorySerializer
-    permission_classes = [permissions.IsAuthenticated, IsWorkspaceMemberForHistory]
+    permission_classes = [permissions.IsAuthenticated, IsEmailVerified, IsWorkspaceMemberForHistory]
     pagination_class = HistoryPagination
 
     def get_queryset(self):

@@ -7,8 +7,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'avatar', 'is_staff', 'is_superuser', 'date_joined')
-        read_only_fields = ('id', 'email', 'date_joined', 'is_staff', 'is_superuser')
+        fields = ('id', 'email', 'first_name', 'last_name', 'avatar', 'is_staff', 'is_superuser', 'date_joined', 'email_verified')
+        read_only_fields = ('id', 'email', 'date_joined', 'is_staff', 'is_superuser', 'email_verified')
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -24,13 +24,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        import uuid
         validated_data.pop('password_confirm')
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            avatar=validated_data.get('avatar', None)
+            avatar=validated_data.get('avatar', None),
+            email_verified=False,
+            verification_token=uuid.uuid4().hex
         )
         return user
 
@@ -130,4 +133,20 @@ class UserAdminDetailSerializer(serializers.ModelSerializer):
         elif "iPhone" in ua or "iPad" in ua:
             return "iOS"
         return "Other"
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+class ResetPasswordConfirmSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({"password": "Password fields must match."})
+        return attrs
+
 

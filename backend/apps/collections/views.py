@@ -3,10 +3,11 @@ from django.db import models
 from .models import Collection
 from .serializers import CollectionSerializer
 from .permissions import IsWorkspaceMemberForCollection
+from apps.accounts.permissions import IsEmailVerified
 
 class CollectionViewSet(viewsets.ModelViewSet):
     serializer_class = CollectionSerializer
-    permission_classes = [permissions.IsAuthenticated, IsWorkspaceMemberForCollection]
+    permission_classes = [permissions.IsAuthenticated, IsEmailVerified, IsWorkspaceMemberForCollection]
 
     def get_queryset(self):
         user = self.request.user

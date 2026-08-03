@@ -228,3 +228,19 @@ HEALTH_CHECK = {
     'DISK_USAGE_MAX': 90,
     'MEMORY_MIN': 100,
 }
+
+# Email Settings
+if DEBUG and not os.getenv('EMAIL_HOST_USER'):
+    # Default to console backend for local dev without credentials
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'Kyreqo <noreply@kyreqo.com>'
+else:
+    # Use real SMTP backend (e.g. Gmail SMTP)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'Kyreqo <{EMAIL_HOST_USER}>' if EMAIL_HOST_USER else 'Kyreqo <noreply@kyreqo.com>')
+

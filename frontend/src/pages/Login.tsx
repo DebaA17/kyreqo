@@ -107,6 +107,12 @@ export default function Login() {
               <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
                 Password
               </label>
+              <Link
+                to="/forgot-password"
+                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition"
+              >
+                Forgot Password?
+              </Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />

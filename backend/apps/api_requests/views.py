@@ -60,6 +60,12 @@ class ProxyRequestView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        if request.user and request.user.is_authenticated and not getattr(request.user, 'email_verified', False):
+            return Response(
+                {"error": "Your email address must be verified to send requests."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         import time
         start_time = time.time()
 
@@ -158,9 +164,11 @@ class ProxyRequestView(APIView):
                 pass
 
 
+from apps.accounts.permissions import IsEmailVerified
+
 class CollectionRequestViewSet(viewsets.ModelViewSet):
     serializer_class = CollectionRequestSerializer
-    permission_classes = [permissions.IsAuthenticated, IsWorkspaceMemberForRequest]
+    permission_classes = [permissions.IsAuthenticated, IsEmailVerified, IsWorkspaceMemberForRequest]
 
     def get_queryset(self):
         user = self.request.user

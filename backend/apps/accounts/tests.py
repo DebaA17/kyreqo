@@ -148,12 +148,89 @@ class AccountsAPITests(APITestCase):
         response = self.client.get(admin_logs_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        
+        # Authenticated as admin
         self.client.force_authenticate(user=admin_user)
         response = self.client.get(admin_users_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 2)  
+        self.assertGreaterEqual(len(response.data), 2)  # owner, member, and admin_user
 
         response = self.client.get(admin_logs_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_user_registration_generates_token_and_unverified(self):
+        response = self.client.post(self.register_url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        user = User.objects.get(email=self.user_data['email'])
+        self.assertFalse(user.email_verified)
+        self.assertIsNotNone(user.verification_token)
+
+    def test_verify_email_success(self):
+        # Register user
+        self.client.post(self.register_url, self.user_data, format='json')
+        user = User.objects.get(email=self.user_data['email'])
+        token = user.verification_token
+
+        verify_url = reverse('accounts:verify_email')
+        response = self.client.post(verify_url, {"token": token}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        user.refresh_from_db()
+        self.assertTrue(user.email_verified)
+        self.assertIsNone(user.verification_token)
+
+    def test_resend_verification_success(self):
+        # Register user
+        self.client.post(self.register_url, self.user_data, format='json')
+        user = User.objects.get(email=self.user_data['email'])
+        original_token = user.verification_token
+
+        resend_url = reverse('accounts:resend_verification')
+        response = self.client.post(resend_url, {"email": user.email}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        user.refresh_from_db()
+        self.assertNotEqual(user.verification_token, original_token)
+
+    def test_forgot_password_success(self):
+        user = User.objects.create_user(
+            email=self.user_data['email'],
+            password=self.user_data['password']
+        )
+        
+        forgot_url = reverse('accounts:reset_password')
+        response = self.client.post(forgot_url, {"email": user.email}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        user.refresh_from_db()
+        self.assertIsNotNone(user.password_reset_token)
+        self.assertIsNotNone(user.password_reset_token_created_at)
+
+    def test_reset_password_confirm_success(self):
+        user = User.objects.create_user(
+            email=self.user_data['email'],
+            password=self.user_data['password']
+        )
+        
+        # Trigger forgot password
+        forgot_url = reverse('accounts:reset_password')
+        self.client.post(forgot_url, {"email": user.email}, format='json')
+        user.refresh_from_db()
+        token = user.password_reset_token
+
+        confirm_url = reverse('accounts:reset_password_confirm')
+        new_password = "NewStrongPassword123!"
+        response = self.client.post(confirm_url, {
+            "token": token,
+            "password": new_password,
+            "password_confirm": new_password
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Try logging in with new password
+        login_data = {
+            "email": user.email,
+            "password": new_password
+        }
+        login_response = self.client.post(self.login_url, login_data, format='json')
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)

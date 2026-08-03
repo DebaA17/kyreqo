@@ -3,10 +3,11 @@ from django.db import models
 from .models import Environment
 from .serializers import EnvironmentSerializer
 from .permissions import IsWorkspaceMemberForEnvironment
+from apps.accounts.permissions import IsEmailVerified
 
 class EnvironmentViewSet(viewsets.ModelViewSet):
     serializer_class = EnvironmentSerializer
-    permission_classes = [permissions.IsAuthenticated, IsWorkspaceMemberForEnvironment]
+    permission_classes = [permissions.IsAuthenticated, IsEmailVerified, IsWorkspaceMemberForEnvironment]
 
     def get_queryset(self):
         user = self.request.user
