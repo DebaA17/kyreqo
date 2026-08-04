@@ -37,6 +37,48 @@ interface RequestHeader {
   value: string;
   enabled: boolean;
 }
+// Common HTTP Header Keys for autocomplete
+const COMMON_HEADER_KEYS = [
+  'Accept',
+  'Accept-Encoding',
+  'Accept-Language',
+  'Authorization',
+  'Cache-Control',
+  'Connection',
+  'Content-Length',
+  'Content-Type',
+  'Cookie',
+  'Host',
+  'Origin',
+  'Referer',
+  'User-Agent',
+  'X-Requested-With',
+  'X-CSRFToken',
+  'X-Forwarded-For',
+  'X-Forwarded-Proto',
+  'X-Real-IP',
+];
+
+// Common HTTP Header Values for autocomplete
+const COMMON_HEADER_VALUES = [
+  'application/json',
+  'application/x-www-form-urlencoded',
+  'multipart/form-data',
+  'text/plain',
+  'text/html',
+  'application/xml',
+  'application/javascript',
+  'image/png',
+  'image/jpeg',
+  'Bearer ',
+  'Basic ',
+  'no-cache',
+  'no-store',
+  'max-age=0',
+  'must-revalidate',
+  'keep-alive',
+  'close',
+];
 
 const getStatusText = (code: number): string => {
   const statusMap: Record<number, string> = {
@@ -829,6 +871,20 @@ export default function Dashboard() {
                         + Add Header
                       </button>
                     </div>
+
+                    {/* Datalist definitions */}
+                    <datalist id="header-keys">
+                      {COMMON_HEADER_KEYS.map(key => (
+                        <option key={key} value={key} />
+                      ))}
+                    </datalist>
+
+                    <datalist id="header-values">
+                      {COMMON_HEADER_VALUES.map(val => (
+                        <option key={val} value={val} />
+                      ))}
+                    </datalist>
+
                     <div className="flex-1 overflow-y-auto flex flex-col gap-2">
                       {headers.map((h, idx) => (
                         <div key={idx} className="flex gap-2 items-center">
@@ -843,6 +899,7 @@ export default function Dashboard() {
                             value={h.key}
                             onChange={e => updateHeader(idx, 'key', e.target.value)}
                             placeholder="Header Key"
+                            list="header-keys"
                             className="flex-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                           />
                           <input
@@ -850,6 +907,7 @@ export default function Dashboard() {
                             value={h.value}
                             onChange={e => updateHeader(idx, 'value', e.target.value)}
                             placeholder="Value"
+                            list="header-values"
                             className="flex-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                           />
                         </div>
