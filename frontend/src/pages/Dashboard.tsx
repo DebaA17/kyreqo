@@ -12,6 +12,7 @@ import {
   Check,
   Sparkles,
   AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
@@ -36,6 +37,28 @@ interface RequestHeader {
   value: string;
   enabled: boolean;
 }
+
+const getStatusText = (code: number): string => {
+  const statusMap: Record<number, string> = {
+    200: 'OK',
+    201: 'Created',
+    202: 'Accepted',
+    204: 'No Content',
+    301: 'Moved Permanently',
+    302: 'Found',
+    304: 'Not Modified',
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    403: 'Forbidden',
+    404: 'Not Found',
+    405: 'Method Not Allowed',
+    500: 'Internal Server Error',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable',
+    504: 'Gateway Timeout',
+  };
+  return statusMap[code] || '';
+};
 
 export default function Dashboard() {
   const [isCopied, setIsCopied] = useState(false);
@@ -285,6 +308,17 @@ export default function Dashboard() {
     setUrl(lastRequest.url);
     setHeaders(lastRequest.headers);
     setBody(lastRequest.body);
+    setShowUrlSuggestions(false);
+    setActiveSuggestionIndex(-1);
+  };
+
+  const handleResetRequest = () => {
+    setMethod('GET');
+    setUrl('');
+    setHeaders([{ key: 'Content-Type', value: 'application/json', enabled: true }]);
+    setBody('{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}');
+    setResponse(null);
+    setStatusInfo(null);
     setShowUrlSuggestions(false);
     setActiveSuggestionIndex(-1);
   };
@@ -712,6 +746,15 @@ export default function Dashboard() {
                   </button>
                 )}
 
+                <button
+                  onClick={handleResetRequest}
+                  className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
+                  title="Reset request to default"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </button>
+
                 <div className="flex gap-2">
                   <button
                     onClick={handleSend}
@@ -901,7 +944,9 @@ export default function Dashboard() {
         ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
       `}
                       >
-                        {statusInfo.code === 0 ? 'FAIL' : statusInfo.code}
+                        {statusInfo.code === 0
+                          ? 'FAIL'
+                          : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
                       </span>
                       <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
                         {statusInfo.time} ms
