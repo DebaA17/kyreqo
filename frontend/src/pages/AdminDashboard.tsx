@@ -350,7 +350,8 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-zinc-400">
-                        {new Date(usr.date_joined).toLocaleDateString(undefined, {
+                        {new Date(usr.date_joined).toLocaleDateString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
@@ -360,7 +361,8 @@ export default function AdminDashboard() {
                         {usr.last_login ? (
                           <div className="flex flex-col">
                             <span className="text-zinc-200 font-medium">
-                              {new Date(usr.last_login).toLocaleString(undefined, {
+                              {new Date(usr.last_login).toLocaleString('en-IN', {
+                                timeZone: 'Asia/Kolkata',
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
                               })}
@@ -445,7 +447,8 @@ export default function AdminDashboard() {
                         <span className="flex items-center space-x-1.5">
                           <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                           <span>
-                            {new Date(log.timestamp).toLocaleString(undefined, {
+                            {new Date(log.timestamp).toLocaleString('en-IN', {
+                              timeZone: 'Asia/Kolkata',
                               dateStyle: 'medium',
                               timeStyle: 'medium',
                             })}
