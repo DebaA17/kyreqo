@@ -1,0 +1,18 @@
+# robots.txt for Kyreqo
+# https://kyreqo.vercel.app/robots.txt
+
+User-agent: *
+Allow: /
+
+# Disallow sensitive routes
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+
+# Sitemap location
+Sitemap: https://kyreqo.vercel.app/sitemap.xml
+
+# Crawl delay (optional - be nice to servers)
+Crawl-delay: 1
