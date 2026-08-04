@@ -1,0 +1,8 @@
+# Kyreqo Security Policy
+# https://kyreqo.vercel.app/.well-known/security.txt
+
+Contact: https://github.com/DebaA17/kyreqo/issues/new
+Encryption: https://kyreqo.vercel.app/.well-known/pgp-key.txt
+Expires: 2027-08-04T12:00:00.000Z
+Preferred-Languages: en
+Canonical: https://kyreqo.vercel.app/.well-known/security.txt

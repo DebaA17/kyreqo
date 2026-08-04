@@ -889,7 +889,7 @@ export default function Dashboard() {
                       {headers.map((h, idx) => (
                         <div key={idx} className="flex gap-2 items-center">
                           <input
-                            type="checkbox"
+                            ro
                             checked={h.enabled}
                             onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
                             className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4"
