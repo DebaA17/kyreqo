@@ -84,14 +84,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     register: async data => {
       set({ isLoading: true, error: null });
       try {
-        const responseData = await apiClient<User & { tokens: { access: string; refresh: string } }>(
-          '/api/accounts/register/',
-          {
-            method: 'POST',
-            body: JSON.stringify(data),
-            skipAuth: true,
-          }
-        );
+        const responseData = await apiClient<
+          User & { tokens: { access: string; refresh: string } }
+        >('/api/accounts/register/', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          skipAuth: true,
+        });
 
         localStorage.setItem('accessToken', responseData.tokens.access);
         localStorage.setItem('refreshToken', responseData.tokens.refresh);
