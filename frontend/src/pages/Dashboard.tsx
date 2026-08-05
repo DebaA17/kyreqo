@@ -623,15 +623,7 @@ export default function Dashboard() {
                     Admin Console
                   </Link>
                 )}
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('onboarding_completed');
-                    openWizard();
-                  }}
-                  className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                >
-                  🔄 Restart Onboarding
-                </button>
+
                 <button
                   onClick={logout}
                   className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"

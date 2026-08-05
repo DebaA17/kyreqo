@@ -83,13 +83,24 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     register: async data => {
       set({ isLoading: true, error: null });
       try {
-        await apiClient<User>('/api/accounts/register/', {
-          method: 'POST',
-          body: JSON.stringify(data),
-          skipAuth: true,
+        const responseData = await apiClient<User & { tokens: { access: string; refresh: string } }>(
+          '/api/accounts/register/',
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+            skipAuth: true,
+          }
+        );
+
+        localStorage.setItem('accessToken', responseData.tokens.access);
+        localStorage.setItem('refreshToken', responseData.tokens.refresh);
+
+        set({
+          accessToken: responseData.tokens.access,
+          refreshToken: responseData.tokens.refresh,
         });
 
-        await get().login(data.email, data.password);
+        await get().loadProfile();
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Registration failed. Please check your details.';
