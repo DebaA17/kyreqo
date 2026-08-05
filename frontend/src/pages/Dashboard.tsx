@@ -105,7 +105,7 @@ const getStatusText = (code: number): string => {
 };
 
 export default function Dashboard() {
-  const { hasCompletedOnboarding, openWizard } = useOnboardingStore();
+  const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
@@ -479,15 +479,13 @@ export default function Dashboard() {
 
   // Check if onboarding should show on first login
   useEffect(() => {
-    if (user && !hasCompletedOnboarding) {
-      openWizard();
-    }
-  }, [user, hasCompletedOnboarding, openWizard]);
-  useEffect(() => {
     if (user) {
       syncFromUser(user);
+      if (!user.has_completed_onboarding) {
+        openWizard();
+      }
     }
-  }, [user, syncFromUser]);
+  }, [user, syncFromUser, openWizard]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden">
