@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { Clock, X, ChevronRight, ChevronDown, Search } from 'lucide-react';
 import useHistoryStore from '../store/historyStore';
 import { RequestHistory } from '../types/history';
 import { useAuthStore } from '../store/authStore';
@@ -12,6 +12,7 @@ interface HistorySidebarProps {
 const HistorySidebar: React.FC<HistorySidebarProps> = ({ workspaceId, onSelectHistory }) => {
   const { history, fetchHistory, deleteHistoryEntry, clearHistory, isLoading } = useHistoryStore();
   const { isAuthenticated } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
@@ -110,70 +111,121 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({ workspaceId, onSelectHi
 
       {/* History List */}
       {isExpanded && (
-        <div className="flex-1 overflow-y-auto">
-          {!isAuthenticated ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-              <Clock className="h-8 w-8 text-zinc-600 mb-2" />
-              <p className="text-xs text-zinc-400 font-semibold">Sign in for History</p>
-              <p className="text-[10px] text-zinc-500 mt-1 max-w-[180px]">
-                Log in to save and access your request history across devices.
-              </p>
-            </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <span className="h-5 w-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></span>
-            </div>
-          ) : history.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Clock className="h-8 w-8 text-zinc-600 mb-2" />
-              <p className="text-xs text-zinc-400 font-medium">No history yet</p>
-              <p className="text-[10px] text-zinc-600 mt-1 max-w-[160px]">
-                Send your first request to see it here.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {history.map(item => (
-                <div
-                  key={item.id}
-                  className="group px-2 py-2 hover:bg-zinc-800/50 rounded-lg cursor-pointer transition"
-                  onClick={() => onSelectHistory(item)}
+        <>
+          {/* Search Input */}
+          {isAuthenticated && history.length > 0 && (
+            <div className="relative mb-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Filter history..."
+                className="w-full pl-8 pr-8 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getMethodColor(item.method)}`}
-                      >
-                        {item.method}
-                      </span>
-                      <span className="text-xs text-zinc-300 truncate flex-1">{item.url}</span>
-                    </div>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        setDeleteItemId(item.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-950/40 rounded transition"
-                    >
-                      <X className="h-3 w-3 text-red-400/60 hover:text-red-400" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 ml-1">
-                    <span
-                      className={`text-[10px] font-medium ${getStatusColor(item.response_status)}`}
-                    >
-                      {item.response_status}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">
-                      {formatTime(item.response_time)}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">{formatDate(item.created_at)}</span>
-                  </div>
-                </div>
-              ))}
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           )}
-        </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {!isAuthenticated ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                <Clock className="h-8 w-8 text-zinc-600 mb-2" />
+                <p className="text-xs text-zinc-400 font-semibold">Sign in for History</p>
+                <p className="text-[10px] text-zinc-500 mt-1 max-w-[180px]">
+                  Log in to save and access your request history across devices.
+                </p>
+              </div>
+            ) : isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <span className="h-5 w-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></span>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {(() => {
+                  const filteredHistory = history.filter(
+                    item =>
+                      item.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      item.method.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+
+                  if (searchQuery && filteredHistory.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <p className="text-xs text-zinc-400 font-medium">
+                          No matching history items
+                        </p>
+                        <p className="text-[10px] text-zinc-600 mt-1">
+                          Try a different search term
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  if (filteredHistory.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Clock className="h-8 w-8 text-zinc-600 mb-2" />
+                        <p className="text-xs text-zinc-400 font-medium">No history yet</p>
+                        <p className="text-[10px] text-zinc-600 mt-1 max-w-[160px]">
+                          Send your first request to see it here.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return filteredHistory.map(item => (
+                    <div
+                      key={item.id}
+                      className="group px-2 py-2 hover:bg-zinc-800/50 rounded-lg cursor-pointer transition"
+                      onClick={() => onSelectHistory(item)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getMethodColor(item.method)}`}
+                          >
+                            {item.method}
+                          </span>
+                          <span className="text-xs text-zinc-300 truncate flex-1">{item.url}</span>
+                        </div>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setDeleteItemId(item.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-950/40 rounded transition"
+                        >
+                          <X className="h-3 w-3 text-red-400/60 hover:text-red-400" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 ml-1">
+                        <span
+                          className={`text-[10px] font-medium ${getStatusColor(item.response_status)}`}
+                        >
+                          {item.response_status}
+                        </span>
+                        <span className="text-[10px] text-zinc-500">
+                          {formatTime(item.response_time)}
+                        </span>
+                        <span className="text-[10px] text-zinc-500">
+                          {formatDate(item.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Delete Single Entry Confirmation Modal */}
