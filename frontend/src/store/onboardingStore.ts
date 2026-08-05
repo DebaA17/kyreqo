@@ -15,6 +15,7 @@ interface OnboardingState {
   goToStep: (step: number) => void;
   completeOnboarding: () => Promise<void>;
   resetWizard: () => void;
+  reset: () => void;
   syncFromUser: (user: { has_completed_onboarding?: boolean }) => void;
 }
 
@@ -61,12 +62,15 @@ const useOnboardingStore = create<OnboardingState>((set, get) => ({
   },
 
   resetWizard: () => set({ isOpen: false, currentStep: 0, isCompleting: false }),
+  reset: () => {
+    localStorage.removeItem('onboarding_completed');
+    set({ isOpen: false, currentStep: 0, isCompleting: false, hasCompletedOnboarding: false });
+  },
 
   syncFromUser: user => {
-    if (user?.has_completed_onboarding) {
-      localStorage.setItem('onboarding_completed', 'true');
-      set({ hasCompletedOnboarding: true });
-    }
+    const completed = !!user?.has_completed_onboarding;
+    localStorage.setItem('onboarding_completed', completed ? 'true' : 'false');
+    set({ hasCompletedOnboarding: completed });
   },
 }));
 

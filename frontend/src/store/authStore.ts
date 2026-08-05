@@ -5,6 +5,7 @@ import useWorkspaceStore from './workspaceStore';
 import useCollectionStore from './collectionStore';
 import useEnvironmentStore from './environmentStore';
 import useHistoryStore from './historyStore';
+import useOnboardingStore from './onboardingStore';
 
 interface AuthActions {
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
@@ -119,6 +120,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       useCollectionStore.getState().reset();
       useEnvironmentStore.getState().reset();
       useHistoryStore.getState().reset();
+      useOnboardingStore.getState().reset();
       set({
         user: null,
         accessToken: null,
