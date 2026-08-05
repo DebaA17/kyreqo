@@ -112,3 +112,15 @@ class AdminLoginLogListView(generics.ListAPIView):
     serializer_class = LoginAttemptSerializer
     permission_classes = [IsAdminUser]
 
+from rest_framework.decorators import api_view, permission_classes
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_onboarding(request):
+    """Mark the current user's onboarding as completed."""
+    user = request.user
+    user.has_completed_onboarding = True
+    user.save(update_fields=['has_completed_onboarding'])
+    return Response(
+        {'message': 'Onboarding completed successfully'},
+        status=status.HTTP_200_OK
+    )

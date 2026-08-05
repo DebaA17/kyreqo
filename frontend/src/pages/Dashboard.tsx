@@ -27,6 +27,8 @@ import {
   substituteVariablesInObject,
   getActiveVariables,
 } from '../utils/variables';
+import useOnboardingStore from '../store/onboardingStore';
+import OnboardingWizard from '../components/OnboardingWizard';
 import HistorySidebar from '../components/HistorySidebar';
 import { RequestHistory } from '../types/history';
 import useHistoryStore from '../store/historyStore';
@@ -103,6 +105,7 @@ const getStatusText = (code: number): string => {
 };
 
 export default function Dashboard() {
+  const { hasCompletedOnboarding, openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
@@ -110,6 +113,7 @@ export default function Dashboard() {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'collections' | 'history'>(
     'collections'
   );
+  const { syncFromUser } = useOnboardingStore();
   const [prettifyError, setPrettifyError] = useState<string | null>(null);
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
@@ -473,6 +477,18 @@ export default function Dashboard() {
     };
   }, [loading, handleSend]);
 
+  // Check if onboarding should show on first login
+  useEffect(() => {
+    if (user && !hasCompletedOnboarding) {
+      openWizard();
+    }
+  }, [user, hasCompletedOnboarding, openWizard]);
+  useEffect(() => {
+    if (user) {
+      syncFromUser(user);
+    }
+  }, [user, syncFromUser]);
+
   return (
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden">
       {}
@@ -607,6 +623,15 @@ export default function Dashboard() {
                     Admin Console
                   </Link>
                 )}
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('onboarding_completed');
+                    openWizard();
+                  }}
+                  className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
+                >
+                  🔄 Restart Onboarding
+                </button>
                 <button
                   onClick={logout}
                   className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
@@ -1104,6 +1129,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <OnboardingWizard />
     </div>
   );
 }
