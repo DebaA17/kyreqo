@@ -5,6 +5,7 @@ import useWorkspaceStore from './workspaceStore';
 import useCollectionStore from './collectionStore';
 import useEnvironmentStore from './environmentStore';
 import useHistoryStore from './historyStore';
+import useOnboardingStore from './onboardingStore';
 
 interface AuthActions {
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
@@ -83,13 +84,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     register: async data => {
       set({ isLoading: true, error: null });
       try {
-        await apiClient<User>('/api/accounts/register/', {
+        const responseData = await apiClient<
+          User & { tokens: { access: string; refresh: string } }
+        >('/api/accounts/register/', {
           method: 'POST',
           body: JSON.stringify(data),
           skipAuth: true,
         });
 
-        await get().login(data.email, data.password);
+        localStorage.setItem('accessToken', responseData.tokens.access);
+        localStorage.setItem('refreshToken', responseData.tokens.refresh);
+
+        set({
+          accessToken: responseData.tokens.access,
+          refreshToken: responseData.tokens.refresh,
+        });
+
+        await get().loadProfile();
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Registration failed. Please check your details.';
@@ -108,6 +119,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       useCollectionStore.getState().reset();
       useEnvironmentStore.getState().reset();
       useHistoryStore.getState().reset();
+      useOnboardingStore.getState().reset();
       set({
         user: null,
         accessToken: null,

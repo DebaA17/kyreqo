@@ -30,8 +30,27 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # Log successful login attempt for registration
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        LoginAttempt.objects.create(
+            email=user.email,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            is_successful=True
+        )
+
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+
         user_data = UserSerializer(user).data
+        user_data['tokens'] = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
         return Response(user_data, status=status.HTTP_201_CREATED)
+
 
 class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer

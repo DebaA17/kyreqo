@@ -105,7 +105,7 @@ const getStatusText = (code: number): string => {
 };
 
 export default function Dashboard() {
-  const { hasCompletedOnboarding, openWizard } = useOnboardingStore();
+  const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
@@ -479,15 +479,13 @@ export default function Dashboard() {
 
   // Check if onboarding should show on first login
   useEffect(() => {
-    if (user && !hasCompletedOnboarding) {
-      openWizard();
-    }
-  }, [user, hasCompletedOnboarding, openWizard]);
-  useEffect(() => {
     if (user) {
       syncFromUser(user);
+      if (!user.has_completed_onboarding) {
+        openWizard();
+      }
     }
-  }, [user, syncFromUser]);
+  }, [user, syncFromUser, openWizard]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30 overflow-hidden">
@@ -623,15 +621,7 @@ export default function Dashboard() {
                     Admin Console
                   </Link>
                 )}
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('onboarding_completed');
-                    openWizard();
-                  }}
-                  className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                >
-                  🔄 Restart Onboarding
-                </button>
+
                 <button
                   onClick={logout}
                   className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
