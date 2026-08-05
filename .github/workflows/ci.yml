@@ -2,12 +2,11 @@ name: Kyreqo Integration Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
-
 env:
-  USE_SQLITE: 'True'
+  USE_SQLITE: "True"
 
 jobs:
   # ----------------------------------------------------
@@ -31,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
@@ -84,7 +83,6 @@ jobs:
       run:
         working-directory: backend
 
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -92,8 +90,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install Dependencies
         run: |
@@ -134,4 +132,3 @@ jobs:
           } finally {
             Stop-Process -Id $proc.Id -Force
           }
-
