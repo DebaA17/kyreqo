@@ -840,9 +840,8 @@ export default function Dashboard() {
           {}
           <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
             {}
-            <div className="flex flex-col gap-2">
-              {/* Row 1: Method + URL */}
-              <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex flex-1 gap-2 min-w-0">
                 <select
                   value={method}
                   onChange={e =>
@@ -850,7 +849,7 @@ export default function Dashboard() {
                       e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'
                     )
                   }
-                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto w-full
+                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24 flex-shrink-0
         ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
         ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
         ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
@@ -980,58 +979,55 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Row 2: Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex gap-2 flex-1">
-                  {lastRequest && (
-                    <button
-                      onClick={handleRestoreLastRequest}
-                      className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
-                      title="Restore last request"
-                    >
-                      ↺ Restore
-                    </button>
-                  )}
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                {lastRequest && (
                   <button
-                    onClick={handleResetRequest}
-                    className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
-                    title="Reset request to default"
+                    onClick={handleRestoreLastRequest}
+                    className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
+                    title="Restore last request"
                   >
-                    <RotateCcw className="h-4 w-4" />
-                    Reset
+                    ↺ Restore
                   </button>
-                  <button
-                    onClick={handleSend}
-                    disabled={loading}
-                    className="flex-1 justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 fill-current" />
-                        Send
-                      </>
-                    )}
-                  </button>
-                  {user && (
-                    <button
-                      onClick={() => {
-                        if (collections.length > 0) {
-                          setSaveCollectionId(collections[0].id);
-                        }
-                        setShowSaveRequestModal(true);
-                      }}
-                      className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
-                    >
-                      <Folder className="h-4 w-4" />
-                      Save
-                    </button>
+                )}
+                <button
+                  onClick={handleResetRequest}
+                  className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
+                  title="Reset request to default"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={loading}
+                  className="flex-[2] md:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-current" />
+                      Send
+                    </>
                   )}
-                </div>
+                </button>
+                {user && (
+                  <button
+                    onClick={() => {
+                      if (collections.length > 0) {
+                        setSaveCollectionId(collections[0].id);
+                      }
+                      setShowSaveRequestModal(true);
+                    }}
+                    className="flex-1 md:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
+                  >
+                    <Folder className="h-4 w-4" />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1089,38 +1085,29 @@ export default function Dashboard() {
 
                   <div className="flex-1 overflow-y-auto flex flex-col gap-2">
                     {headers.map((h, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-col sm:flex-row gap-2 items-start sm:items-center"
-                      >
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <input
-                            type="checkbox"
-                            checked={h.enabled}
-                            onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
-                            className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
-                          />
-                          <span className="text-[10px] text-zinc-500 sm:hidden">Key</span>
-                        </div>
+                      <div key={idx} className="flex gap-2 items-center w-full">
+                        <input
+                          type="checkbox"
+                          checked={h.enabled}
+                          onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
+                          className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
+                        />
                         <input
                           type="text"
                           value={h.key}
                           onChange={e => updateHeader(idx, 'key', e.target.value)}
                           placeholder="Header Key"
                           list="header-keys"
-                          className="flex-1 w-full sm:w-auto px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                         />
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <span className="text-[10px] text-zinc-500 sm:hidden">Value</span>
-                          <input
-                            type="text"
-                            value={h.value}
-                            onChange={e => updateHeader(idx, 'value', e.target.value)}
-                            placeholder="Value"
-                            list="header-values"
-                            className="flex-1 w-full sm:w-auto px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          value={h.value}
+                          onChange={e => updateHeader(idx, 'value', e.target.value)}
+                          placeholder="Value"
+                          list="header-values"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        />
                       </div>
                     ))}
                   </div>
