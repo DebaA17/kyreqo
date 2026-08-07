@@ -840,8 +840,8 @@ export default function Dashboard() {
           {}
           <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
             {}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex flex-1 gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex flex-1 gap-2 min-w-0">
                 <select
                   value={method}
                   onChange={e =>
@@ -849,15 +849,14 @@ export default function Dashboard() {
                       e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'
                     )
                   }
-
-                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500
-                    ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
-                    ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
-                    ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
-                    ${method === 'PATCH' ? 'text-sky-400 border-sky-500/20' : ''}
-                    ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
-                    ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
-                  `}
+                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24 flex-shrink-0
+        ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
+        ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
+        ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
+        ${method === 'PATCH' ? 'text-sky-400 border-sky-500/20' : ''}
+        ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
+        ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
+      `}
                 >
                   <option value="GET">GET</option>
                   <option value="POST">POST</option>
@@ -932,13 +931,11 @@ export default function Dashboard() {
                       }
                     }}
                     onBlur={() => {
-                      // Delay hiding to allow click on suggestion
                       setTimeout(() => setShowUrlSuggestions(false), 200);
                     }}
                     placeholder="https://api.example.com/endpoint"
                     className="w-full pl-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
                   />
-
                   {url && (
                     <button
                       type="button"
@@ -961,8 +958,6 @@ export default function Dashboard() {
                       <X className="h-4 w-4" />
                     </button>
                   )}
-
-                  {/* Suggestions Dropdown */}
                   {showUrlSuggestions && urlSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
                       {urlSuggestions.map((suggestion, index) => (
@@ -982,265 +977,263 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 {lastRequest && (
                   <button
                     onClick={handleRestoreLastRequest}
-                    className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
+                    className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
                     title="Restore last request"
                   >
                     ↺ Restore
                   </button>
                 )}
-
                 <button
                   onClick={handleResetRequest}
-                  className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
+                  className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
                   title="Reset request to default"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Reset
                 </button>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSend}
-                    disabled={loading}
-                    className="flex-1 sm:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 fill-current" />
-                        Send
-                      </>
-                    )}
-                  </button>
-
-                  {user && (
-                    <button
-                      onClick={() => {
-                        if (collections.length > 0) {
-                          setSaveCollectionId(collections[0].id);
-                        }
-                        setShowSaveRequestModal(true);
-                      }}
-                      className="flex-1 sm:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer"
-                    >
-                      <Folder className="h-4 w-4" />
-                      Save
-                    </button>
+                <button
+                  onClick={handleSend}
+                  disabled={loading}
+                  className="flex-[2] md:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-current" />
+                      Send
+                    </>
                   )}
-                </div>
-              </div>
-
-              {}
-              <div className="flex border-b border-zinc-800 text-xs">
-                <button
-                  onClick={() => setActiveTab('headers')}
-                  className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'headers' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Headers ({headers.filter(h => h.key).length})
                 </button>
-                <button
-                  onClick={() => setActiveTab('body')}
-                  className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'body' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Body
-                </button>
-                <button
-                  onClick={() => setActiveTab('params')}
-                  className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Params
-                </button>
+                {user && (
+                  <button
+                    onClick={() => {
+                      if (collections.length > 0) {
+                        setSaveCollectionId(collections[0].id);
+                      }
+                      setShowSaveRequestModal(true);
+                    }}
+                    className="flex-1 md:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
+                  >
+                    <Folder className="h-4 w-4" />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
 
             {}
-            <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-[#08080b]">
-              {}
-              <div className="flex-1 border-r border-[#1f1f29] p-4 flex flex-col min-h-0 min-w-0">
-                {activeTab === 'headers' && (
-                  <div className="flex-1 flex flex-col min-h-0 gap-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-semibold text-zinc-400">Request Headers</span>
+            <div className="flex border-b border-zinc-800 text-xs">
+              <button
+                onClick={() => setActiveTab('headers')}
+                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'headers' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+              >
+                Headers ({headers.filter(h => h.key).length})
+              </button>
+              <button
+                onClick={() => setActiveTab('body')}
+                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'body' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+              >
+                Body
+              </button>
+              <button
+                onClick={() => setActiveTab('params')}
+                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+              >
+                Params
+              </button>
+            </div>
+          </div>
+
+          {}
+          <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-[#08080b]">
+            {}
+            <div className="flex-1 border-r border-[#1f1f29] p-4 flex flex-col min-h-0 min-w-0">
+              {activeTab === 'headers' && (
+                <div className="flex-1 flex flex-col min-h-0 gap-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-semibold text-zinc-400">Request Headers</span>
+                    <button
+                      onClick={addHeader}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                    >
+                      + Add Header
+                    </button>
+                  </div>
+
+                  {/* Datalist definitions */}
+                  <datalist id="header-keys">
+                    {COMMON_HEADER_KEYS.map(key => (
+                      <option key={key} value={key} />
+                    ))}
+                  </datalist>
+
+                  <datalist id="header-values">
+                    {COMMON_HEADER_VALUES.map(val => (
+                      <option key={val} value={val} />
+                    ))}
+                  </datalist>
+
+                  <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                    {headers.map((h, idx) => (
+                      <div key={idx} className="flex gap-2 items-center w-full">
+                        <input
+                          type="checkbox"
+                          checked={h.enabled}
+                          onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
+                          className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={h.key}
+                          onChange={e => updateHeader(idx, 'key', e.target.value)}
+                          placeholder="Header Key"
+                          list="header-keys"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        />
+                        <input
+                          type="text"
+                          value={h.value}
+                          onChange={e => updateHeader(idx, 'value', e.target.value)}
+                          placeholder="Value"
+                          list="header-values"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'body' && (
+                <div className="flex-1 flex flex-col min-h-0 gap-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={addHeader}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                        onClick={handlePrettifyJson}
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                        title="Prettify JSON"
                       >
-                        + Add Header
+                        <Sparkles className="h-3 w-3" />
+                        Prettify
                       </button>
-                    </div>
-
-                    {/* Datalist definitions */}
-                    <datalist id="header-keys">
-                      {COMMON_HEADER_KEYS.map(key => (
-                        <option key={key} value={key} />
-                      ))}
-                    </datalist>
-
-                    <datalist id="header-values">
-                      {COMMON_HEADER_VALUES.map(val => (
-                        <option key={val} value={val} />
-                      ))}
-                    </datalist>
-
-                    <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                      {headers.map((h, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <input
-                            type="checkbox"
-                            checked={h.enabled}
-                            onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
-                            className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4"
-                          />
-                          <input
-                            type="text"
-                            value={h.key}
-                            onChange={e => updateHeader(idx, 'key', e.target.value)}
-                            placeholder="Header Key"
-                            list="header-keys"
-                            className="flex-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                          />
-                          <input
-                            type="text"
-                            value={h.value}
-                            onChange={e => updateHeader(idx, 'value', e.target.value)}
-                            placeholder="Value"
-                            list="header-values"
-                            className="flex-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                          />
-                        </div>
-                      ))}
+                      <span className="text-[10px] text-zinc-500">raw (application/json)</span>
                     </div>
                   </div>
-                )}
-
-                {activeTab === 'body' && (
-                  <div className="flex-1 flex flex-col min-h-0 gap-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={handlePrettifyJson}
-                          className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
-                          title="Prettify JSON"
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          Prettify
-                        </button>
-                        <span className="text-[10px] text-zinc-500">raw (application/json)</span>
-                      </div>
+                  {prettifyError && (
+                    <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-400/10 border border-amber-400/20 rounded px-2 py-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {prettifyError}
                     </div>
-                    {prettifyError && (
-                      <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-400/10 border border-amber-400/20 rounded px-2 py-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {prettifyError}
-                      </div>
-                    )}
-                    <textarea
-                      value={body}
-                      onChange={e => {
-                        setBody(e.target.value);
-                        setPrettifyError(null);
+                  )}
+                  <textarea
+                    value={body}
+                    onChange={e => {
+                      setBody(e.target.value);
+                      setPrettifyError(null);
+                    }}
+                    className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
+                  />
+                </div>
+              )}
+
+              {activeTab === 'params' && (
+                <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
+                  <HelpCircle className="h-6 w-6 mb-1 text-zinc-600" />
+                  URL parameters will be parsed dynamically from your request URL.
+                </div>
+              )}
+            </div>
+
+            {}
+            <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
+                    Response Console
+                  </span>
+                  {response !== null && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            typeof response === 'string'
+                              ? response
+                              : JSON.stringify(response, null, 2)
+                          );
+                          setIsCopied(true);
+                          setTimeout(() => setIsCopied(false), 2000);
+                        } catch (err) {
+                          console.error('Failed to copy:', err);
+                        }
                       }}
-                      className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
-                    />
-                  </div>
-                )}
-
-                {activeTab === 'params' && (
-                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
-                    <HelpCircle className="h-6 w-6 mb-1 text-zinc-600" />
-                    URL parameters will be parsed dynamically from your request URL.
+                      className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="h-3 w-3 text-green-400" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+                {statusInfo && (
+                  <div className="flex gap-2 flex-wrap justify-end">
+                    <span
+                      className={`text-xs px-2.5 py-0.5 rounded font-bold flex items-center gap-1
+        ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
+      `}
+                    >
+                      {statusInfo.code === 0
+                        ? 'FAIL'
+                        : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
+                    </span>
+                    <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
+                      {statusInfo.time} ms
+                    </span>
+                    <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
+                      {(statusInfo.size / 1024).toFixed(2)} KB
+                    </span>
                   </div>
                 )}
               </div>
 
-              {}
-              <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
-                <div className="flex items-center justify-between mb-3 gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
-                      Response Console
-                    </span>
-                    {response !== null && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(
-                              typeof response === 'string'
-                                ? response
-                                : JSON.stringify(response, null, 2)
-                            );
-                            setIsCopied(true);
-                            setTimeout(() => setIsCopied(false), 2000);
-                          } catch (err) {
-                            console.error('Failed to copy:', err);
-                          }
-                        }}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
-                      >
-                        {isCopied ? (
-                          <>
-                            <Check className="h-3 w-3 text-green-400" />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3 w-3" />
-                            Copy
-                          </>
-                        )}
-                      </button>
-                    )}
+              <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
+                {response ? (
+                  <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                    {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
+                  </pre>
+                ) : loading ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
+                    <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
+                    Retrieving target response...
                   </div>
-                  {statusInfo && (
-                    <div className="flex gap-2 flex-wrap justify-end">
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded font-bold flex items-center gap-1
-        ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
-      `}
-                      >
-                        {statusInfo.code === 0
-                          ? 'FAIL'
-                          : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
-                      </span>
-                      <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
-                        {statusInfo.time} ms
-                      </span>
-                      <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
-                        {(statusInfo.size / 1024).toFixed(2)} KB
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
-                  {response ? (
-                    <pre className="flex-1 p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
-                    </pre>
-                  ) : loading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
-                      <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
-                      Retrieving target response...
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-6">
-                      <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
-                      <p className="font-semibold text-zinc-400">Response is empty</p>
-                      <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
-                        Enter a URL and click Send above to run an API request through the Kyreqo
-                        engine.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-4 sm:p-6">
+                    <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
+                    <p className="font-semibold text-zinc-400">Response is empty</p>
+                    <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
+                      Enter a URL and click Send above to run an API request through the Kyreqo
+                      engine.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
