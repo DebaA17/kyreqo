@@ -106,6 +106,28 @@ const getStatusText = (code: number): string => {
   return statusMap[code] || '';
 };
 
+const formatProfileError = (errorStr: string | null): string => {
+  if (!errorStr) return '';
+  try {
+    if (errorStr.startsWith('{') && errorStr.endsWith('}')) {
+      const parsed = JSON.parse(errorStr);
+      return Object.entries(parsed)
+        .map(([field, messages]) => {
+          const fieldName = field
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          const msgList = Array.isArray(messages) ? messages.join(', ') : String(messages);
+          return `${fieldName}: ${msgList}`;
+        })
+        .join('\n');
+    }
+  } catch {
+    // ignore
+  }
+  return errorStr;
+};
+
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
@@ -120,7 +142,7 @@ export default function Dashboard() {
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
-  const { user, logout, updateProfile, isLoading } = useAuthStore();
+  const { user, logout, updateProfile, isLoading, error, clearError } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
     'GET'
   );
@@ -156,12 +178,17 @@ export default function Dashboard() {
   const handleProfileUpdateChanges = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!firstName.trim()) {
+      useAuthStore.setState({ error: '{"first_name":["This field may not be blank."]}' });
+      return;
+    }
+
     const finalAvatar = customAvatar.trim() || avatar;
 
     try {
       await updateProfile({
-        first_name: firstName,
-        last_name: lastName,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         avatar: finalAvatar,
       });
 
@@ -645,9 +672,9 @@ export default function Dashboard() {
                     </p>
                     <p className="text-[9px] text-zinc-500 truncate">{user.email}</p>
                   </div>
-                  <div className=" relative">
+                  <div className="relative">
                     <Settings
-                      className=" cursor-pointer"
+                      className="cursor-pointer text-zinc-400 hover:text-zinc-200 transition"
                       onClick={() => {
                         setEditProfile(!editProfile);
                       }}
@@ -659,11 +686,12 @@ export default function Dashboard() {
                           setLastName(user?.last_name ?? '');
                           setAvatar(user?.avatar ?? '');
                           setCustomAvatar('');
+                          clearError();
 
                           setEditProfile(false);
                           setShowProfileUpdateModal(true);
                         }}
-                        className=" absolute h-12 flex justify-center items-center w-24 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer rounded-lg bottom-12 -left-16"
+                        className="absolute h-12 flex justify-center items-center w-24 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer rounded-lg bottom-8 right-0 z-50 shadow-lg"
                       >
                         Edit Profile
                       </div>
@@ -675,6 +703,12 @@ export default function Dashboard() {
                       >
                         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
                           <h3 className="text-lg font-medium text-white mb-4">Edit Profile</h3>
+
+                          {error && (
+                            <div className="text-xs text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5 mb-4 whitespace-pre-line">
+                              {formatProfileError(error)}
+                            </div>
+                          )}
 
                           <div className="space-y-4">
                             <div>
@@ -697,7 +731,6 @@ export default function Dashboard() {
                                 onChange={e => setLastName(e.target.value)}
                                 placeholder="Doe"
                                 className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
-                                autoFocus
                               />
                             </div>
                             <div className="flex flex-col gap-2 mt-1">
@@ -705,7 +738,6 @@ export default function Dashboard() {
                                 Profile Avatar
                               </label>
 
-                              {}
                               <div className="flex gap-3 justify-between items-center bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3">
                                 <div className="flex gap-2">
                                   {PRESET_AVATARS.map(av => (
@@ -733,7 +765,6 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {}
                               <div className="relative mt-1">
                                 <ImageIcon className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
                                 <input
@@ -751,9 +782,9 @@ export default function Dashboard() {
                             <button
                               className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
                               type="button"
-
                               onClick={() => {
                                 setShowProfileUpdateModal(false);
+                                clearError();
                               }}
                             >
                               Cancel
