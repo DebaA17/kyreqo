@@ -27,6 +27,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
   const [envName, setEnvName] = useState('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newEnvName, setNewEnvName] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen && workspaceId) {
@@ -98,12 +99,16 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
     }
   };
 
-  const handleDeleteEnvironment = async () => {
+  const handleDeleteEnvironment = () => {
     if (!selectedEnvId) return;
-    if (!confirm('Delete this environment and all its variables?')) return;
+    setShowDeleteConfirm(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!selectedEnvId) return;
     await deleteEnvironment(selectedEnvId);
     setSelectedEnvId(environments.length > 1 ? environments[0]?.id || null : null);
+    setShowDeleteConfirm(false);
   };
 
   const handleActivateEnvironment = () => {
@@ -341,6 +346,36 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
           </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center gap-3 text-red-500 mb-3">
+              <AlertCircle className="h-5 w-5" />
+              <h3 className="text-base font-semibold text-white">Delete Environment</h3>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              Are you sure you want to delete{' '}
+              <span className="text-zinc-200 font-medium">"{envName}"</span> and all its variables?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2.5">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-3.5 py-2 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg transition shadow-md shadow-red-950/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

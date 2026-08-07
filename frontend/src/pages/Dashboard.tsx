@@ -13,6 +13,8 @@ import {
   Sparkles,
   AlertCircle,
   RotateCcw,
+  Settings,
+  ImageIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
@@ -104,6 +106,28 @@ const getStatusText = (code: number): string => {
   return statusMap[code] || '';
 };
 
+const formatProfileError = (errorStr: string | null): string => {
+  if (!errorStr) return '';
+  try {
+    if (errorStr.startsWith('{') && errorStr.endsWith('}')) {
+      const parsed = JSON.parse(errorStr);
+      return Object.entries(parsed)
+        .map(([field, messages]) => {
+          const fieldName = field
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          const msgList = Array.isArray(messages) ? messages.join(', ') : String(messages);
+          return `${fieldName}: ${msgList}`;
+        })
+        .join('\n');
+    }
+  } catch {
+    // ignore
+  }
+  return errorStr;
+};
+
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
@@ -118,7 +142,7 @@ export default function Dashboard() {
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
   const { collections, fetchCollections } = useCollectionStore();
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateProfile, isLoading, error, clearError } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
     'GET'
   );
@@ -137,6 +161,42 @@ export default function Dashboard() {
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
+
+  const [editProfile, setEditProfile] = useState<boolean>(false);
+  const [showProfileUpdateModal, setShowProfileUpdateModal] = useState<boolean>(false);
+  const [firstName, setFirstName] = useState(user?.first_name ?? '');
+  const [lastName, setLastName] = useState(user?.last_name ?? '');
+  const [avatar, setAvatar] = useState(user?.avatar ?? '');
+  const PRESET_AVATARS = [
+    { name: 'Adventurer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix' },
+    { name: 'Bottts', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Aneka' },
+    { name: 'Lorelei', url: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Jack' },
+    { name: 'Avataaars', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dusty' },
+  ];
+  const [customAvatar, setCustomAvatar] = useState('');
+
+  const handleProfileUpdateChanges = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!firstName.trim()) {
+      useAuthStore.setState({ error: '{"first_name":["This field may not be blank."]}' });
+      return;
+    }
+
+    const finalAvatar = customAvatar.trim() || avatar;
+
+    try {
+      await updateProfile({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        avatar: finalAvatar,
+      });
+
+      setShowProfileUpdateModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Last Request Restore State
   const [lastRequest, setLastRequest] = useState<{
@@ -611,6 +671,135 @@ export default function Dashboard() {
                       {user.first_name} {user.last_name}
                     </p>
                     <p className="text-[9px] text-zinc-500 truncate">{user.email}</p>
+                  </div>
+                  <div className="relative">
+                    <Settings
+                      className="cursor-pointer text-zinc-400 hover:text-zinc-200 transition"
+                      onClick={() => {
+                        setEditProfile(!editProfile);
+                      }}
+                    />
+                    {editProfile && (
+                      <div
+                        onClick={() => {
+                          setFirstName(user?.first_name ?? '');
+                          setLastName(user?.last_name ?? '');
+                          setAvatar(user?.avatar ?? '');
+                          setCustomAvatar('');
+                          clearError();
+
+                          setEditProfile(false);
+                          setShowProfileUpdateModal(true);
+                        }}
+                        className="absolute h-12 flex justify-center items-center w-24 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer rounded-lg bottom-8 right-0 z-50 shadow-lg"
+                      >
+                        Edit Profile
+                      </div>
+                    )}
+                    {showProfileUpdateModal && (
+                      <form
+                        onSubmit={handleProfileUpdateChanges}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                      >
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
+                          <h3 className="text-lg font-medium text-white mb-4">Edit Profile</h3>
+
+                          {error && (
+                            <div className="text-xs text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5 mb-4 whitespace-pre-line">
+                              {formatProfileError(error)}
+                            </div>
+                          )}
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-xs text-zinc-400 mb-1">First Name</label>
+                              <input
+                                type="text"
+                                value={firstName}
+                                onChange={e => setFirstName(e.target.value)}
+                                placeholder="John"
+                                className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
+                                autoFocus
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-zinc-400 mb-1">Last Name</label>
+                              <input
+                                type="text"
+                                value={lastName}
+                                onChange={e => setLastName(e.target.value)}
+                                placeholder="Doe"
+                                className="w-full px-3 py-2 bg-zinc-950 text-white rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 transition"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2 mt-1">
+                              <label className="text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+                                Profile Avatar
+                              </label>
+
+                              <div className="flex gap-3 justify-between items-center bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3">
+                                <div className="flex gap-2">
+                                  {PRESET_AVATARS.map(av => (
+                                    <button
+                                      key={av.name}
+                                      type="button"
+                                      onClick={() => {
+                                        setAvatar(av.url);
+                                        setCustomAvatar('');
+                                      }}
+                                      className={`h-11 w-11 rounded-lg border overflow-hidden p-0.5 transition cursor-pointer bg-zinc-900
+                      ${avatar === av.url && !customAvatar ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-zinc-800 hover:border-zinc-700'}
+                    `}
+                                    >
+                                      <img
+                                        src={av.url}
+                                        alt={av.name}
+                                        className="h-full w-full object-cover rounded"
+                                      />
+                                    </button>
+                                  ))}
+                                </div>
+                                <div className="text-[10px] text-zinc-500 font-medium select-none">
+                                  PICK A PRESET
+                                </div>
+                              </div>
+
+                              <div className="relative mt-1">
+                                <ImageIcon className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-zinc-500" />
+                                <input
+                                  type="url"
+                                  value={customAvatar}
+                                  onChange={e => setCustomAvatar(e.target.value)}
+                                  placeholder="Or paste a custom avatar image URL"
+                                  className="w-full pl-11 pr-4 py-3 bg-zinc-900/60 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 mt-6">
+                            <button
+                              className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
+                              type="button"
+                              onClick={() => {
+                                setShowProfileUpdateModal(false);
+                                clearError();
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition disabled:opacity-50"
+                              type="submit"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? 'Saving...' : 'Save Changes'}
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
                 {(user.is_staff || user.is_superuser) && (

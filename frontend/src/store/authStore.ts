@@ -13,6 +13,7 @@ interface AuthActions {
   logout: () => void;
   loadProfile: () => Promise<void>;
   clearError: () => void;
+  updateProfile: (data: { first_name: string; last_name: string; avatar: string }) => Promise<User>;
 }
 
 const getInitialState = (): AuthState => {
@@ -158,6 +159,29 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           isLoading: false,
           error: message,
         });
+      }
+    },
+    updateProfile: async (data: { first_name: string; last_name: string; avatar: string }) => {
+      set({ isLoading: true, error: null });
+
+      try {
+        const updatedUser = await apiClient<User>('/api/accounts/me/', {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        });
+
+        set({
+          user: updatedUser,
+          isLoading: false,
+        });
+
+        return updatedUser;
+      } catch (err) {
+        set({
+          isLoading: false,
+          error: err instanceof Error ? err.message : 'Failed to update profile.',
+        });
+        throw err;
       }
     },
   };
