@@ -128,6 +128,26 @@ const formatProfileError = (errorStr: string | null): string => {
   return errorStr;
 };
 
+const formatProfileError = (errorStr: string | null): string => {
+  ...
+  return errorStr;
+};
+
+// 👇 YAHAN ADD KARO
+const formatResponseSize = (bytes: number): string => {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(2)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+};
+
+export default function Dashboard() {
+
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
@@ -1214,7 +1234,7 @@ export default function Dashboard() {
                         {statusInfo.time} ms
                       </span>
                       <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
-                        {(statusInfo.size / 1024).toFixed(2)} KB
+                        {formatResponseSize(statusInfo.size)}
                       </span>
                     </div>
                   )}
