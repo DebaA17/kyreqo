@@ -44,6 +44,10 @@ class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     avatar = models.URLField(max_length=500, blank=True, null=True, validators=[validate_avatar_url])
+    has_completed_onboarding = models.BooleanField(
+        default=False,
+        help_text="Whether the user has completed the onboarding wizard"
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

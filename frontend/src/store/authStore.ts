@@ -5,6 +5,7 @@ import useWorkspaceStore from './workspaceStore';
 import useCollectionStore from './collectionStore';
 import useEnvironmentStore from './environmentStore';
 import useHistoryStore from './historyStore';
+import useOnboardingStore from './onboardingStore';
 
 interface AuthActions {
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
@@ -12,6 +13,7 @@ interface AuthActions {
   logout: () => void;
   loadProfile: () => Promise<void>;
   clearError: () => void;
+  updateProfile: (data: { first_name: string; last_name: string; avatar: string }) => Promise<User>;
 }
 
 const getInitialState = (): AuthState => {
@@ -83,13 +85,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     register: async data => {
       set({ isLoading: true, error: null });
       try {
-        await apiClient<User>('/api/accounts/register/', {
+        const responseData = await apiClient<
+          User & { tokens: { access: string; refresh: string } }
+        >('/api/accounts/register/', {
           method: 'POST',
           body: JSON.stringify(data),
           skipAuth: true,
         });
 
-        await get().login(data.email, data.password);
+        localStorage.setItem('accessToken', responseData.tokens.access);
+        localStorage.setItem('refreshToken', responseData.tokens.refresh);
+
+        set({
+          accessToken: responseData.tokens.access,
+          refreshToken: responseData.tokens.refresh,
+        });
+
+        await get().loadProfile();
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Registration failed. Please check your details.';
@@ -108,6 +120,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
       useCollectionStore.getState().reset();
       useEnvironmentStore.getState().reset();
       useHistoryStore.getState().reset();
+      useOnboardingStore.getState().reset();
       set({
         user: null,
         accessToken: null,
@@ -146,6 +159,29 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           isLoading: false,
           error: message,
         });
+      }
+    },
+    updateProfile: async (data: { first_name: string; last_name: string; avatar: string }) => {
+      set({ isLoading: true, error: null });
+
+      try {
+        const updatedUser = await apiClient<User>('/api/accounts/me/', {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        });
+
+        set({
+          user: updatedUser,
+          isLoading: false,
+        });
+
+        return updatedUser;
+      } catch (err) {
+        set({
+          isLoading: false,
+          error: err instanceof Error ? err.message : 'Failed to update profile.',
+        });
+        throw err;
       }
     },
   };

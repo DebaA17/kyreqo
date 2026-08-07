@@ -11,3 +11,4 @@ overrides:
   react-router-dom: "^7.18.1"
   vite: "^6.4.3"
   esbuild: ">=0.25.0"
+  js-yaml: "^4.3.1"

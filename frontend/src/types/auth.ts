@@ -7,6 +7,7 @@ export interface User {
   date_joined: string;
   is_staff?: boolean;
   is_superuser?: boolean;
+  has_completed_onboarding?: boolean;
 }
 
 export interface AuthState {
