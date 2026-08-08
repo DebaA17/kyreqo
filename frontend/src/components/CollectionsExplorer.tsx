@@ -7,6 +7,7 @@ import {
   Folder,
   Search,
   Trash2,
+  Copy,
 } from 'lucide-react';
 import useCollectionStore, { Collection, SavedRequest } from '../store/collectionStore';
 import { useAuthStore } from '../store/authStore';
@@ -155,7 +156,25 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
       alert('Failed to delete request.');
     }
   };
-
+  const handleDuplicateRequest = async (req: SavedRequest, parentCollectionId: number) => {
+    try {
+      await apiClient('/api/requests/', {
+        method: 'POST',
+        body: JSON.stringify({
+          collection: req.collection || parentCollectionId,
+          name: `${req.name} Copy`,
+          url: req.url,
+          method: req.method,
+          headers: req.headers || {},
+          query_params: req.query_params || {},
+          body: req.body || '',
+        }),
+      });
+      fetchCollections(workspaceId);
+    } catch (err) {
+      alert('Failed to duplicate request.');
+    }
+  };
   const renderTree = (items: TreeNode[], level: number = 0) => {
     return items.map(item => {
       const hasSubfolders = item.children && item.children.length > 0;
@@ -264,6 +283,13 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
                         className="flex items-center gap-1 opacity-0 group-hover/req:opacity-100 transition"
                         onClick={e => e.stopPropagation()}
                       >
+                        <button
+                          onClick={() => handleDuplicateRequest(req, item.id)}
+                          className="p-1 hover:bg-zinc-700 rounded transition"
+                          title="Duplicate saved request"
+                        >
+                          <Copy className="h-3.5 w-3.5 text-zinc-400 hover:text-zinc-200" />
+                        </button>
                         <button
                           onClick={() => {
                             setDeleteTarget({
