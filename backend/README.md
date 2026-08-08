@@ -4,9 +4,12 @@ Built with Django REST Framework.
 
 ## Setup Instructions
 
-1. Create a virtual environment:
+> [!NOTE]
+> The commands below are for Linux and macOS. For Windows, use `python` instead of `python3`, and `venv\Scripts\activate` to activate the virtual environment.
+
+1. Create and activate a virtual environment:
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate
    ```
 2. Install dependencies:
@@ -15,6 +18,6 @@ Built with Django REST Framework.
    ```
 3. Run migrations and start server:
    ```bash
-   python manage.py migrate
-   python manage.py runserver
+   python3 manage.py migrate
+   python3 manage.py runserver
    ```
