@@ -48,38 +48,62 @@ interface QueryParam {
   enabled: boolean;
 }
 
-// Parses the query string of a URL into a QueryParam grid, always keeping a
-// trailing blank row so the user has somewhere to type a new param.
-const parseUrlToParams = (rawUrl: string): QueryParam[] => {
-  const queryIndex = rawUrl.indexOf('?');
+// Splits a URL into its base path, query string, and #fragment (kept intact
+// and reattached verbatim so it's never treated as part of the query string).
+const splitUrl = (rawUrl: string): { basePath: string; queryString: string; fragment: string } => {
+  const hashIndex = rawUrl.indexOf('#');
+  const withoutFragment = hashIndex === -1 ? rawUrl : rawUrl.slice(0, hashIndex);
+  const fragment = hashIndex === -1 ? '' : rawUrl.slice(hashIndex);
+
+  const queryIndex = withoutFragment.indexOf('?');
   if (queryIndex === -1) {
-    return [{ key: '', value: '', enabled: true }];
+    return { basePath: withoutFragment, queryString: '', fragment };
   }
 
-  const searchParams = new URLSearchParams(rawUrl.slice(queryIndex + 1));
-  const parsed: QueryParam[] = [];
-  searchParams.forEach((value, key) => {
-    parsed.push({ key, value, enabled: true });
-  });
+  return {
+    basePath: withoutFragment.slice(0, queryIndex),
+    queryString: withoutFragment.slice(queryIndex + 1),
+    fragment,
+  };
+};
 
-  parsed.push({ key: '', value: '', enabled: true });
-  return parsed;
+// Parses the query string of a URL into a QueryParam grid, always keeping a
+// trailing blank row so the user has somewhere to type a new param. Rows the
+// user had disabled are carried over (unless the URL now redefines that key)
+// since a disabled param is intentionally absent from the URL text itself.
+const parseUrlToParams = (rawUrl: string, previousParams: QueryParam[] = []): QueryParam[] => {
+  const { queryString } = splitUrl(rawUrl);
+
+  const parsed: QueryParam[] = [];
+  const parsedKeys = new Set<string>();
+  if (queryString) {
+    const searchParams = new URLSearchParams(queryString);
+    searchParams.forEach((value, key) => {
+      parsed.push({ key, value, enabled: true });
+      parsedKeys.add(key);
+    });
+  }
+
+  const retainedDisabled = previousParams.filter(
+    p => !p.enabled && p.key.trim() !== '' && !parsedKeys.has(p.key)
+  );
+
+  return [...parsed, ...retainedDisabled, { key: '', value: '', enabled: true }];
 };
 
 // Rebuilds a URL from its base path plus the currently enabled params,
 // dropping disabled/blank rows from the query string (they stay in the grid).
 const buildUrlFromParams = (rawUrl: string, params: QueryParam[]): string => {
-  const queryIndex = rawUrl.indexOf('?');
-  const basePath = queryIndex === -1 ? rawUrl : rawUrl.slice(0, queryIndex);
+  const { basePath, fragment } = splitUrl(rawUrl);
 
   const enabledParams = params.filter(p => p.enabled && p.key.trim() !== '');
   if (enabledParams.length === 0) {
-    return basePath;
+    return `${basePath}${fragment}`;
   }
 
   const searchParams = new URLSearchParams();
   enabledParams.forEach(p => searchParams.append(p.key, p.value));
-  return `${basePath}?${searchParams.toString()}`;
+  return `${basePath}?${searchParams.toString()}${fragment}`;
 };
 // Common HTTP Header Keys for autocomplete
 const COMMON_HEADER_KEYS = [
@@ -567,7 +591,7 @@ export default function Dashboard() {
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUrl(value);
-    setQueryParams(parseUrlToParams(value));
+    setQueryParams(parseUrlToParams(value, queryParams));
 
     // Get suggestions
     const saved = localStorage.getItem('urlHistory');
