@@ -4,7 +4,6 @@ import {
   Send,
   Play,
   Terminal,
-  HelpCircle,
   Shield,
   Folder,
   X,
@@ -15,6 +14,7 @@ import {
   RotateCcw,
   Settings,
   ImageIcon,
+  Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
@@ -41,6 +41,70 @@ interface RequestHeader {
   value: string;
   enabled: boolean;
 }
+
+interface QueryParam {
+  key: string;
+  value: string;
+  enabled: boolean;
+}
+
+// Splits a URL into its base path, query string, and #fragment (kept intact
+// and reattached verbatim so it's never treated as part of the query string).
+const splitUrl = (rawUrl: string): { basePath: string; queryString: string; fragment: string } => {
+  const hashIndex = rawUrl.indexOf('#');
+  const withoutFragment = hashIndex === -1 ? rawUrl : rawUrl.slice(0, hashIndex);
+  const fragment = hashIndex === -1 ? '' : rawUrl.slice(hashIndex);
+
+  const queryIndex = withoutFragment.indexOf('?');
+  if (queryIndex === -1) {
+    return { basePath: withoutFragment, queryString: '', fragment };
+  }
+
+  return {
+    basePath: withoutFragment.slice(0, queryIndex),
+    queryString: withoutFragment.slice(queryIndex + 1),
+    fragment,
+  };
+};
+
+// Parses the query string of a URL into a QueryParam grid, always keeping a
+// trailing blank row so the user has somewhere to type a new param. Rows the
+// user had disabled are carried over (unless the URL now redefines that key)
+// since a disabled param is intentionally absent from the URL text itself.
+const parseUrlToParams = (rawUrl: string, previousParams: QueryParam[] = []): QueryParam[] => {
+  const { queryString } = splitUrl(rawUrl);
+
+  const parsed: QueryParam[] = [];
+  const parsedKeys = new Set<string>();
+  if (queryString) {
+    const searchParams = new URLSearchParams(queryString);
+    searchParams.forEach((value, key) => {
+      parsed.push({ key, value, enabled: true });
+      parsedKeys.add(key);
+    });
+  }
+
+  const retainedDisabled = previousParams.filter(
+    p => !p.enabled && p.key.trim() !== '' && !parsedKeys.has(p.key)
+  );
+
+  return [...parsed, ...retainedDisabled, { key: '', value: '', enabled: true }];
+};
+
+// Rebuilds a URL from its base path plus the currently enabled params,
+// dropping disabled/blank rows from the query string (they stay in the grid).
+const buildUrlFromParams = (rawUrl: string, params: QueryParam[]): string => {
+  const { basePath, fragment } = splitUrl(rawUrl);
+
+  const enabledParams = params.filter(p => p.enabled && p.key.trim() !== '');
+  if (enabledParams.length === 0) {
+    return `${basePath}${fragment}`;
+  }
+
+  const searchParams = new URLSearchParams();
+  enabledParams.forEach(p => searchParams.append(p.key, p.value));
+  return `${basePath}?${searchParams.toString()}${fragment}`;
+};
 // Common HTTP Header Keys for autocomplete
 const COMMON_HEADER_KEYS = [
   'Accept',
@@ -160,6 +224,9 @@ export default function Dashboard() {
   const [headers, setHeaders] = useState<RequestHeader[]>([
     { key: 'Content-Type', value: 'application/json', enabled: true },
   ]);
+  const [queryParams, setQueryParams] = useState<QueryParam[]>([
+    { key: '', value: '', enabled: true },
+  ]);
   const [body, setBody] = useState('{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}');
   const [activeTab, setActiveTab] = useState<'params' | 'headers' | 'body' | 'auth'>('headers');
   const [response, setResponse] = useState<unknown>(null);
@@ -277,6 +344,7 @@ export default function Dashboard() {
   const handleHistorySelect = (history: RequestHistory) => {
     setMethod(history.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
     setUrl(history.url);
+    setQueryParams(parseUrlToParams(history.url));
 
     if (history.headers) {
       const headerEntries = Object.entries(history.headers);
@@ -308,6 +376,38 @@ export default function Dashboard() {
     const updated = [...headers];
     updated[index] = { ...updated[index], [field]: val } as RequestHeader;
     setHeaders(updated);
+  };
+
+  const addQueryParam = () => {
+    setQueryParams([...queryParams, { key: '', value: '', enabled: true }]);
+  };
+
+  const updateQueryParam = (
+    index: number,
+    field: 'key' | 'value' | 'enabled',
+    val: string | boolean
+  ) => {
+    const updated = [...queryParams];
+    updated[index] = { ...updated[index], [field]: val } as QueryParam;
+
+    const last = updated[updated.length - 1];
+    if (last.key.trim() !== '' || last.value.trim() !== '') {
+      updated.push({ key: '', value: '', enabled: true });
+    }
+
+    setQueryParams(updated);
+    setUrl(buildUrlFromParams(url, updated));
+  };
+
+  const removeQueryParam = (index: number) => {
+    let updated = queryParams.filter((_, i) => i !== index);
+    const last = updated[updated.length - 1];
+    if (!last || last.key.trim() !== '' || last.value.trim() !== '') {
+      updated = [...updated, { key: '', value: '', enabled: true }];
+    }
+
+    setQueryParams(updated);
+    setUrl(buildUrlFromParams(url, updated));
   };
   const handlePrettifyJson = () => {
     if (!body || body.trim() === '') {
@@ -443,6 +543,7 @@ export default function Dashboard() {
 
     setMethod(lastRequest.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
     setUrl(lastRequest.url);
+    setQueryParams(parseUrlToParams(lastRequest.url));
     setHeaders(lastRequest.headers);
     setBody(lastRequest.body);
     setShowUrlSuggestions(false);
@@ -452,6 +553,7 @@ export default function Dashboard() {
   const handleResetRequest = () => {
     setMethod('GET');
     setUrl('');
+    setQueryParams([{ key: '', value: '', enabled: true }]);
     setHeaders([{ key: 'Content-Type', value: 'application/json', enabled: true }]);
     setBody('{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}');
     setResponse(null);
@@ -510,6 +612,7 @@ export default function Dashboard() {
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUrl(value);
+    setQueryParams(parseUrlToParams(value, queryParams));
 
     // Get suggestions
     const saved = localStorage.getItem('urlHistory');
@@ -533,6 +636,7 @@ export default function Dashboard() {
   // Handle suggestion click
   const handleSuggestionClick = (suggestion: string) => {
     setUrl(suggestion);
+    setQueryParams(parseUrlToParams(suggestion));
     setShowUrlSuggestions(false);
     setActiveSuggestionIndex(-1);
   };
@@ -653,6 +757,7 @@ export default function Dashboard() {
                 workspaceId={currentWorkspaceId || ''}
                 onSelectRequest={req => {
                   setUrl(req.url);
+                  setQueryParams(parseUrlToParams(req.url));
                   setMethod(req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
                   const reqHeaders: RequestHeader[] = Object.entries(req.headers || {}).map(
                     ([key, value]) => ({
@@ -972,6 +1077,7 @@ export default function Dashboard() {
                       type="button"
                       onClick={() => {
                         setUrl('');
+                        setQueryParams([{ key: '', value: '', enabled: true }]);
                         const saved = localStorage.getItem('urlHistory');
                         let urls: string[] = [];
                         try {
@@ -1080,7 +1186,7 @@ export default function Dashboard() {
                 onClick={() => setActiveTab('params')}
                 className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
               >
-                Params
+                Params ({queryParams.filter(p => p.key).length})
               </button>
             </div>
           </div>
@@ -1179,9 +1285,51 @@ export default function Dashboard() {
               )}
 
               {activeTab === 'params' && (
-                <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
-                  <HelpCircle className="h-6 w-6 mb-1 text-zinc-600" />
-                  URL parameters will be parsed dynamically from your request URL.
+                <div className="flex-1 flex flex-col min-h-0 gap-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-semibold text-zinc-400">Query Parameters</span>
+                    <button
+                      onClick={addQueryParam}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                    >
+                      + Add Param
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                    {queryParams.map((p, idx) => (
+                      <div key={idx} className="flex gap-2 items-center w-full">
+                        <input
+                          type="checkbox"
+                          checked={p.enabled}
+                          onChange={e => updateQueryParam(idx, 'enabled', e.target.checked)}
+                          className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={p.key}
+                          onChange={e => updateQueryParam(idx, 'key', e.target.value)}
+                          placeholder="Param Key"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        />
+                        <input
+                          type="text"
+                          value={p.value}
+                          onChange={e => updateQueryParam(idx, 'value', e.target.value)}
+                          placeholder="Value"
+                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeQueryParam(idx)}
+                          className="text-zinc-500 hover:text-rose-400 transition flex-shrink-0 p-1"
+                          title="Remove parameter"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

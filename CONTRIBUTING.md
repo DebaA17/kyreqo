@@ -43,6 +43,25 @@ All development scripts should be run from the repository root using the workspa
    pnpm frontend
    ```
 
+### Docker Local Setup (Alternative)
+
+If you prefer to run the entire stack (Frontend, Backend, and PostgreSQL database) fully containerized, you can use Docker Compose.
+
+1. **Start all services**:
+
+   ```bash
+   docker compose up --build
+   ```
+
+   _This will build the local Docker images, run migrations automatically, and start:_
+   - **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
+   - **Backend API**: [http://localhost:8000](http://localhost:8000)
+
+2. **Stop the environment**:
+   ```bash
+   docker compose down
+   ```
+
 ---
 
 ## 🔒 Security Practices & Auditing
