@@ -48,12 +48,14 @@ All development scripts should be run from the repository root using the workspa
 If you prefer to run the entire stack (Frontend, Backend, and PostgreSQL database) fully containerized, you can use Docker Compose.
 
 1. **Start all services**:
+
    ```bash
    docker compose up --build
    ```
-   *This will build the local Docker images, run migrations automatically, and start:*
-   * **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
-   * **Backend API**: [http://localhost:8000](http://localhost:8000)
+
+   _This will build the local Docker images, run migrations automatically, and start:_
+   - **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
+   - **Backend API**: [http://localhost:8000](http://localhost:8000)
 
 2. **Stop the environment**:
    ```bash
@@ -86,6 +88,14 @@ We use `bandit` to scan Python code for security issues.
 ---
 
 ## 🌿 Git Workflow & Branches
+
+### ⚠️ IMPORTANT: Issue Assignment Rule
+
+Please do not start working on any issue until you are officially **assigned** by a maintainer.
+
+If you want to contribute to an issue, please leave a comment asking maintainers **@DebaA17** or **@Ruchika402** for assignment first. Unassigned Pull Requests will not be accepted.
+
+---
 
 1. **Branch Names**: Use descriptive prefixes:
    - `feature/feature-name` (e.g., `feature/ssrf-proxy`)
