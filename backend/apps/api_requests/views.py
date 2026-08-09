@@ -68,6 +68,15 @@ class ProxyRequestView(APIView):
         headers = request.data.get('headers', {})
         body = request.data.get('body')
         workspace_id = request.data.get('workspace')
+        timeout_val = request.data.get('timeout', 10000)
+
+        try:
+            # Enforce range limits: minimum 100ms, maximum 60000ms
+            timeout_ms = max(100, min(int(timeout_val), 60000))
+        except (ValueError, TypeError):
+            timeout_ms = 10000
+
+        timeout_seconds = float(timeout_ms) / 1000.0
 
         if not target_url:
             return Response(
@@ -93,7 +102,7 @@ class ProxyRequestView(APIView):
                 url=target_url,
                 headers=filtered_headers,
                 data=body.encode('utf-8') if isinstance(body, str) else body,
-                timeout=10,
+                timeout=timeout_seconds,
                 allow_redirects=False
             )
 
@@ -117,7 +126,7 @@ class ProxyRequestView(APIView):
             duration_ms = int((time.time() - start_time) * 1000)
             self._log_request_history(request, workspace_id, target_url, method, headers, body, status.HTTP_504_GATEWAY_TIMEOUT, duration_ms)
             return Response(
-                {"error": "The request timed out after 10 seconds."},
+                {"error": f"The request timed out after {timeout_ms} ms."},
                 status=status.HTTP_504_GATEWAY_TIMEOUT
             )
         except requests.exceptions.RequestException as e:
