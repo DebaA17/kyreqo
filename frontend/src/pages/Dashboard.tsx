@@ -238,7 +238,7 @@ export default function Dashboard() {
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
-
+  const MAX_RENDER_SIZE = 2 * 1024 * 1024;
   const [editProfile, setEditProfile] = useState<boolean>(false);
   const [showProfileUpdateModal, setShowProfileUpdateModal] = useState<boolean>(false);
   const [firstName, setFirstName] = useState(user?.first_name ?? '');
@@ -319,7 +319,28 @@ export default function Dashboard() {
       alert('Failed to save request.');
     }
   };
+  const handleDownloadResponse = () => {
+    if (!response) return;
 
+    const content = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+
+    const blob = new Blob([content], {
+      type: 'application/json',
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+
+    a.href = url;
+    a.download = 'response.json';
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+  };
   const handleHistorySelect = (history: RequestHistory) => {
     setMethod(history.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
     setUrl(history.url);
@@ -1374,9 +1395,26 @@ export default function Dashboard() {
 
               <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
                 {response ? (
-                  <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                    {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
-                  </pre>
+                  statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
+                      <AlertCircle className="h-10 w-10 text-yellow-500" />
+
+                      <p className="font-semibold">Response too large to display</p>
+
+                      <p className="text-xs text-zinc-500">Size: {formatSize(statusInfo.size)}</p>
+
+                      <button
+                        onClick={handleDownloadResponse}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
+                      >
+                        Download JSON
+                      </button>
+                    </div>
+                  ) : (
+                    <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
+                    </pre>
+                  )
                 ) : loading ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
                     <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
