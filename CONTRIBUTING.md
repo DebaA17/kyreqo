@@ -89,6 +89,14 @@ We use `bandit` to scan Python code for security issues.
 
 ## 🌿 Git Workflow & Branches
 
+### ⚠️ IMPORTANT: Issue Assignment Rule
+
+Please do not start working on any issue until you are officially **assigned** by a maintainer.
+
+If you want to contribute to an issue, please leave a comment asking maintainers **[@DebaA17](https://github.com/DebaA17)** or **[@Ruchika402](https://github.com/Ruchika402)** for assignment first. Unassigned Pull Requests will not be accepted.
+
+---
+
 1. **Branch Names**: Use descriptive prefixes:
    - `feature/feature-name` (e.g., `feature/ssrf-proxy`)
    - `bugfix/bug-description` (e.g., `bugfix/jwt-expiration`)
