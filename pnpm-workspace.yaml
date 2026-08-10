@@ -12,3 +12,4 @@ overrides:
   vite: "^6.4.3"
   esbuild: ">=0.25.0"
   js-yaml: "^4.3.1"
+  nanoid: "^3.3.17"

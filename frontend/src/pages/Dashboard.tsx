@@ -228,7 +228,10 @@ export default function Dashboard() {
     { key: '', value: '', enabled: true },
   ]);
   const [body, setBody] = useState('{\n  "name": "Kyreqo Dev",\n  "status": "active"\n}');
-  const [activeTab, setActiveTab] = useState<'params' | 'headers' | 'body' | 'auth'>('headers');
+  const [activeTab, setActiveTab] = useState<'params' | 'headers' | 'body' | 'auth' | 'settings'>(
+    'headers'
+  );
+  const [timeoutMs, setTimeoutMs] = useState<number>(10000);
   const [response, setResponse] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [statusInfo, setStatusInfo] = useState<{ code: number; time: number; size: number } | null>(
@@ -238,7 +241,7 @@ export default function Dashboard() {
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
-
+  const MAX_RENDER_SIZE = 2 * 1024 * 1024;
   const [editProfile, setEditProfile] = useState<boolean>(false);
   const [showProfileUpdateModal, setShowProfileUpdateModal] = useState<boolean>(false);
   const [firstName, setFirstName] = useState(user?.first_name ?? '');
@@ -319,7 +322,28 @@ export default function Dashboard() {
       alert('Failed to save request.');
     }
   };
+  const handleDownloadResponse = () => {
+    if (!response) return;
 
+    const content = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+
+    const blob = new Blob([content], {
+      type: 'application/json',
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+
+    a.href = url;
+    a.download = 'response.json';
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+  };
   const handleHistorySelect = (history: RequestHistory) => {
     setMethod(history.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY');
     setUrl(history.url);
@@ -460,6 +484,8 @@ export default function Dashboard() {
         proxyHeaders['Authorization'] = `Bearer ${accessToken}`;
       }
 
+      const clampedTimeout = Math.max(100, Math.min(timeoutMs || 10000, 60000));
+
       const proxyResponse = await fetch(proxyUrl, {
         method: 'POST',
         headers: proxyHeaders,
@@ -469,12 +495,17 @@ export default function Dashboard() {
           headers: reqHeaders,
           body: finalBody || null,
           workspace: currentWorkspaceId,
+          timeout: clampedTimeout,
         }),
       });
 
       if (!proxyResponse.ok) {
         const errorData = await proxyResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || `Proxy server returned status ${proxyResponse.status}`);
+        const err = new Error(
+          errorData.error || `Proxy server returned status ${proxyResponse.status}`
+        );
+        (err as { statusCode?: number }).statusCode = proxyResponse.status;
+        throw err;
       }
 
       const res = await proxyResponse.json();
@@ -496,26 +527,44 @@ export default function Dashboard() {
     } catch (error: unknown) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : String(error);
+      const statusCode =
+        error && typeof error === 'object' && 'statusCode' in error
+          ? (error as { statusCode?: number }).statusCode || 0
+          : 0;
+
+      const isTimeout = statusCode === 504 || errorMessage.toLowerCase().includes('timed out');
+
       setResponse(
         JSON.stringify(
           {
             error: 'Failed to fetch response.',
             message: errorMessage,
-            tip: 'If you are targeting local/private services, remember SSRF limits apply. If backend proxy is not started yet, browser CORS restrictions might block direct requests.',
+            tip: isTimeout
+              ? 'Check your Request Timeout settings under the Settings tab. If the target server is slow or performing heavy processing, you may need to increase the timeout limit.'
+              : 'If you are targeting local/private services, remember SSRF limits apply. If backend proxy is not started yet, browser CORS restrictions might block direct requests.',
           },
           null,
           2
         )
       );
       setStatusInfo({
-        code: 0,
+        code: statusCode,
         time: Date.now() - startTime,
         size: 0,
       });
     } finally {
       setLoading(false);
     }
-  }, [environments, activeEnvironmentId, headers, url, body, method, currentWorkspaceId]);
+  }, [
+    environments,
+    activeEnvironmentId,
+    headers,
+    url,
+    body,
+    method,
+    currentWorkspaceId,
+    timeoutMs,
+  ]);
 
   const handleRestoreLastRequest = () => {
     if (!lastRequest) return;
@@ -1167,6 +1216,12 @@ export default function Dashboard() {
               >
                 Params ({queryParams.filter(p => p.key).length})
               </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'settings' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+              >
+                Settings
+              </button>
             </div>
           </div>
 
@@ -1311,6 +1366,48 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+
+              {activeTab === 'settings' && (
+                <div className="flex-1 flex flex-col min-h-0 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-zinc-400">Request Settings</span>
+                    <p className="text-[10px] text-zinc-500">
+                      Configure client behavior for this request.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 max-w-md bg-zinc-900/30 p-4 border border-zinc-800/80 rounded-xl">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col">
+                        <label className="text-xs font-medium text-zinc-300">
+                          Request Timeout (ms)
+                        </label>
+                        <span className="text-[10px] text-zinc-500">
+                          Range: 100ms - 60,000ms (1 min)
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min={100}
+                        max={60000}
+                        value={timeoutMs}
+                        onChange={e => {
+                          const val = Number(e.target.value);
+                          setTimeoutMs(val);
+                        }}
+                        onBlur={() => {
+                          if (isNaN(timeoutMs) || timeoutMs < 100) {
+                            setTimeoutMs(100);
+                          } else if (timeoutMs > 60000) {
+                            setTimeoutMs(60000);
+                          }
+                        }}
+                        className="w-28 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {}
@@ -1374,9 +1471,26 @@ export default function Dashboard() {
 
               <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
                 {response ? (
-                  <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                    {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
-                  </pre>
+                  statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
+                      <AlertCircle className="h-10 w-10 text-yellow-500" />
+
+                      <p className="font-semibold">Response too large to display</p>
+
+                      <p className="text-xs text-zinc-500">Size: {formatSize(statusInfo.size)}</p>
+
+                      <button
+                        onClick={handleDownloadResponse}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
+                      >
+                        Download JSON
+                      </button>
+                    </div>
+                  ) : (
+                    <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
+                    </pre>
+                  )
                 ) : loading ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
                     <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>

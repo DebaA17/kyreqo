@@ -60,22 +60,22 @@ jobs:
       - name: Run Trivy Vulnerability Scanner on Backend
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
-          image-ref: 'kyreqo-backend:local'
-          format: 'table'
-          exit-code: '1' # Fails the pipeline if vulnerabilities are found
+          image-ref: "kyreqo-backend:local"
+          format: "table"
+          exit-code: "1" # Fails the pipeline if vulnerabilities are found
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
 
       - name: Run Trivy Vulnerability Scanner on Frontend
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
-          image-ref: 'kyreqo-frontend:local'
-          format: 'table'
-          exit-code: '1'
+          image-ref: "kyreqo-frontend:local"
+          format: "table"
+          exit-code: "1"
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
 
       # ----------------------------------------------------
       # 3. Publish to GitHub Container Registry (Main branch only)
