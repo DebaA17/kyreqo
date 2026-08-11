@@ -94,7 +94,9 @@ class ProxyRequestView(APIView):
             k: v for k, v in headers.items()
             if k.lower() not in ('host', 'content-length', 'connection')
         }
-
+        DEFAULT_USER_AGENT = "Kyreqo-Agent/1.0 (Proxy; +https://github.com/DebaA17/kyreqo)"
+        if 'user-agent' not in {k.lower() for k in filtered_headers}:
+            filtered_headers['User-Agent'] = DEFAULT_USER_AGENT
         try:
             # codeql[py/full-ssrf]
             res = requests.request(
