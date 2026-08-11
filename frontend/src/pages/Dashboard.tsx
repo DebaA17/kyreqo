@@ -234,6 +234,8 @@ export default function Dashboard() {
   const [timeoutMs, setTimeoutMs] = useState<number>(10000);
   const [response, setResponse] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string, string>>({});
+  const [responseTab, setResponseTab] = useState<'body' | 'headers'>('body');
   const [statusInfo, setStatusInfo] = useState<{ code: number; time: number; size: number } | null>(
     null
   );
@@ -514,6 +516,7 @@ export default function Dashboard() {
       const sizeBytes = new Blob([JSON.stringify(res.data)]).size;
 
       setResponse(res.data);
+      setResponseHeaders(res.headers || {});
       setStatusInfo({
         code: res.status || 200,
         time: duration,
@@ -1469,41 +1472,108 @@ export default function Dashboard() {
                 )}
               </div>
 
+              {/* Tab Switcher */}
+              {response !== null && (
+                <div className="flex gap-1 mb-2 border-b border-zinc-800">
+                  <button
+                    onClick={() => setResponseTab('body')}
+                    className={`px-3 py-1.5 text-xs font-medium transition ${
+                      responseTab === 'body'
+                        ? 'text-indigo-400 border-b-2 border-indigo-500'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    Body
+                  </button>
+                  <button
+                    onClick={() => setResponseTab('headers')}
+                    className={`px-3 py-1.5 text-xs font-medium transition ${
+                      responseTab === 'headers'
+                        ? 'text-indigo-400 border-b-2 border-indigo-500'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    Headers{' '}
+                    {Object.keys(responseHeaders).length > 0 && (
+                      <span className="ml-1 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">
+                        {Object.keys(responseHeaders).length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
+
               <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
-                {response ? (
-                  statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
-                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
-                      <AlertCircle className="h-10 w-10 text-yellow-500" />
+                {responseTab === 'body' ? (
+                  response ? (
+                    statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
+                      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
+                        <AlertCircle className="h-10 w-10 text-yellow-500" />
 
-                      <p className="font-semibold">Response too large to display</p>
+                        <p className="font-semibold">Response too large to display</p>
 
-                      <p className="text-xs text-zinc-500">Size: {formatSize(statusInfo.size)}</p>
+                        <p className="text-xs text-zinc-500">Size: {formatSize(statusInfo.size)}</p>
 
-                      <button
-                        onClick={handleDownloadResponse}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
-                      >
-                        Download JSON
-                      </button>
+                        <button
+                          onClick={handleDownloadResponse}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
+                        >
+                          Download JSON
+                        </button>
+                      </div>
+                    ) : (
+                      <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                        {typeof response === 'string'
+                          ? response
+                          : JSON.stringify(response, null, 2)}
+                      </pre>
+                    )
+                  ) : loading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
+                      <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
+                      Retrieving target response...
                     </div>
                   ) : (
-                    <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                      {typeof response === 'string' ? response : JSON.stringify(response, null, 2)}
-                    </pre>
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-4 sm:p-6">
+                      <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
+                      <p className="font-semibold text-zinc-400">Response is empty</p>
+                      <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
+                        Enter a URL and click Send above to run an API request through the Kyreqo
+                        engine.
+                      </p>
+                    </div>
                   )
-                ) : loading ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
-                    <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
-                    Retrieving target response...
-                  </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-4 sm:p-6">
-                    <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
-                    <p className="font-semibold text-zinc-400">Response is empty</p>
-                    <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
-                      Enter a URL and click Send above to run an API request through the Kyreqo
-                      engine.
-                    </p>
+                  <div className="flex-1 p-3 sm:p-4 overflow-auto">
+                    {Object.keys(responseHeaders).length > 0 ? (
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-zinc-800">
+                            <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
+                            <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(responseHeaders).map(([key, value]) => (
+                            <tr
+                              key={key}
+                              className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
+                            >
+                              <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
+                                {key}
+                              </td>
+                              <td className="py-1.5 text-zinc-300 font-mono text-[11px] break-all">
+                                {value}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
+                        No headers received
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
