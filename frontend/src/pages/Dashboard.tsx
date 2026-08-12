@@ -237,7 +237,7 @@ export default function Dashboard() {
   const [statusInfo, setStatusInfo] = useState<{ code: number; time: number; size: number } | null>(
     null
   );
-
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
@@ -579,6 +579,10 @@ export default function Dashboard() {
   };
 
   const handleResetRequest = () => {
+    setShowResetConfirmModal(true);
+  };
+
+  const confirmResetRequest = () => {
     setMethod('GET');
     setUrl('');
     setQueryParams([{ key: '', value: '', enabled: true }]);
@@ -588,6 +592,8 @@ export default function Dashboard() {
     setStatusInfo(null);
     setShowUrlSuggestions(false);
     setActiveSuggestionIndex(-1);
+
+    setShowResetConfirmModal(false);
   };
 
   // Load URL history from localStorage on mount
@@ -1513,6 +1519,50 @@ export default function Dashboard() {
       </main>
 
       {}
+      {showResetConfirmModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          onClick={() => setShowResetConfirmModal(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-[#0c0c10] border border-[#1f1f29] rounded-xl p-6 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-rose-400" />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-white">Reset request?</h3>
+
+                <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+                  This will clear your current URL, headers, parameters, and request body. This
+                  action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirmModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmResetRequest}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-lg transition"
+              >
+                Reset Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showSaveRequestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
