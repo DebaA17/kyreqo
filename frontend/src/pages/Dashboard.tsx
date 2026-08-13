@@ -205,6 +205,7 @@ const formatProfileError = (errorStr: string | null): string => {
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
   const [isCopied, setIsCopied] = useState(false);
+  const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -427,6 +428,63 @@ export default function Dashboard() {
     } catch (error) {
       setPrettifyError('Invalid JSON format');
       setTimeout(() => setPrettifyError(null), 3000);
+    }
+  };
+  const escapeShellDoubleQuotes = (value: string) => {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  };
+  const generateCurlCommand = () => {
+    const activeVariables = getActiveVariables(environments, activeEnvironmentId);
+
+    const finalUrl = substituteVariables(url, activeVariables);
+
+    const reqHeaders = headers
+      .filter(header => header.enabled && header.key.trim())
+      .map(header => ({
+        key: header.key,
+        value: substituteVariables(header.value, activeVariables),
+      }));
+
+    let finalBody = body;
+
+    if (body) {
+      try {
+        const parsedBody = JSON.parse(body);
+        const substitutedBody = substituteVariablesInObject(parsedBody, activeVariables);
+        finalBody = JSON.stringify(substitutedBody, null, 2);
+      } catch {
+        finalBody = substituteVariables(body, activeVariables);
+      }
+    }
+
+    let command = `curl -X ${method} "${finalUrl}"`;
+
+    reqHeaders.forEach(header => {
+      const escapedHeader = escapeShellDoubleQuotes(`${header.key}: ${header.value}`);
+
+      command += ` -H "${escapedHeader}"`;
+    });
+
+    if (finalBody.trim() && !['GET'].includes(method)) {
+      const escapedBody = escapeShellDoubleQuotes(finalBody);
+      command += ` -d "${escapedBody}"`;
+    }
+
+    return command;
+  };
+  const handleCopyCurl = async () => {
+    try {
+      const curlCommand = generateCurlCommand();
+
+      await navigator.clipboard.writeText(curlCommand);
+
+      setIsCurlCopied(true);
+
+      setTimeout(() => {
+        setIsCurlCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy cURL:', err);
     }
   };
   const handleSend = useCallback(async () => {
@@ -1424,34 +1482,54 @@ export default function Dashboard() {
                     Response Console
                   </span>
                   {response !== null && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(
-                            typeof response === 'string'
-                              ? response
-                              : JSON.stringify(response, null, 2)
-                          );
-                          setIsCopied(true);
-                          setTimeout(() => setIsCopied(false), 2000);
-                        } catch (err) {
-                          console.error('Failed to copy:', err);
-                        }
-                      }}
-                      className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="h-3 w-3 text-green-400" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3" />
-                          Copy
-                        </>
-                      )}
-                    </button>
+                    <>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(
+                              typeof response === 'string'
+                                ? response
+                                : JSON.stringify(response, null, 2)
+                            );
+
+                            setIsCopied(true);
+                            setTimeout(() => setIsCopied(false), 2000);
+                          } catch (err) {
+                            console.error('Failed to copy:', err);
+                          }
+                        }}
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                      >
+                        {isCopied ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-400" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            Copy
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={handleCopyCurl}
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                      >
+                        {isCurlCopied ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-400" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Terminal className="h-3 w-3" />
+                            Copy as cURL
+                          </>
+                        )}
+                      </button>
+                    </>
                   )}
                 </div>
                 {statusInfo && (
