@@ -216,6 +216,13 @@ export default function Dashboard() {
   const [prettifyError, setPrettifyError] = useState<string | null>(null);
   const { environments, activeEnvironmentId } = useEnvironmentStore();
   const { currentWorkspaceId } = useWorkspaceStore();
+
+  // Autocomplete state for environment variables
+  const [envSuggestions, setEnvSuggestions] = useState<string[]>([]);
+  const [showEnvSuggestions, setShowEnvSuggestions] = useState(false);
+  const [activeEnvSuggestionIndex, setActiveEnvSuggestionIndex] = useState(-1);
+  const [envAutocompleteField, setEnvAutocompleteField] = useState<'url' | 'body' | null>(null);
+  const [envTriggerIndex, setEnvTriggerIndex] = useState(-1);
   const { collections, fetchCollections } = useCollectionStore();
   const { user, logout, updateProfile, isLoading, error, clearError } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
@@ -677,6 +684,67 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Check and update autocomplete suggestions for environment variables
+  const checkEnvAutocomplete = (text: string, cursorIndex: number, field: 'url' | 'body') => {
+    const textBeforeCursor = text.substring(0, cursorIndex);
+    const lastTrigger = textBeforeCursor.lastIndexOf('{{');
+    if (lastTrigger !== -1) {
+      const textAfterTrigger = textBeforeCursor.substring(lastTrigger + 2);
+      if (!textAfterTrigger.includes('}}')) {
+        const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
+        const activeVariables = activeEnvironment
+          ? activeEnvironment.variables.filter(v => v.enabled && v.key && v.key.trim() !== '')
+          : [];
+        const query = textAfterTrigger.toLowerCase();
+        const matches = activeVariables
+          .map(v => v.key)
+          .filter(key => key.toLowerCase().includes(query));
+
+        setEnvSuggestions(matches);
+        setShowEnvSuggestions(matches.length > 0);
+        setActiveEnvSuggestionIndex(0);
+        setEnvAutocompleteField(field);
+        setEnvTriggerIndex(lastTrigger);
+        return;
+      }
+    }
+    setShowEnvSuggestions(false);
+    setEnvAutocompleteField(null);
+    setEnvTriggerIndex(-1);
+  };
+
+  // Insert selected environment variable at the trigger index
+  const insertEnvVariable = (variableName: string, field: 'url' | 'body') => {
+    const value = field === 'url' ? url : body;
+    const triggerIndex = envTriggerIndex;
+    if (triggerIndex === -1) return;
+
+    const activeEl = document.activeElement as HTMLInputElement | HTMLTextAreaElement;
+    const cursorPosition = activeEl ? activeEl.selectionStart || value.length : value.length;
+
+    const before = value.substring(0, triggerIndex);
+    const after = value.substring(cursorPosition);
+    const newValue = `${before}{{${variableName}}}${after}`;
+
+    if (field === 'url') {
+      setUrl(newValue);
+    } else {
+      setBody(newValue);
+    }
+
+    setShowEnvSuggestions(false);
+    setEnvAutocompleteField(null);
+    setEnvTriggerIndex(-1);
+
+    setTimeout(() => {
+      if (activeEl) {
+        activeEl.focus();
+        const newCursorPos = triggerIndex + variableName.length + 4;
+        activeEl.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
   // Save URL to history after successful request
   const saveUrlToHistory = (urlToSave: string) => {
     if (!urlToSave || urlToSave.trim().length === 0) return;
@@ -709,6 +777,9 @@ export default function Dashboard() {
     setUrl(value);
     setQueryParams(parseUrlToParams(value, queryParams));
 
+    // Check environment variable autocomplete trigger
+    checkEnvAutocomplete(value, e.target.selectionStart || 0, 'url');
+
     // Get suggestions
     const saved = localStorage.getItem('urlHistory');
     let urls: string[] = [];
@@ -718,13 +789,26 @@ export default function Dashboard() {
       urls = [];
     }
 
-    // Filter suggestions based on input
-    const filtered = value.trim()
-      ? urls.filter(u => u.toLowerCase().includes(value.toLowerCase()))
-      : urls;
+    // Filter suggestions based on input, suppressing if env autocomplete is active
+    const isEnvTriggered =
+      value.substring(0, e.target.selectionStart || 0).lastIndexOf('{{') !== -1 &&
+      !value
+        .substring(
+          value.substring(0, e.target.selectionStart || 0).lastIndexOf('{{') + 2,
+          e.target.selectionStart || 0
+        )
+        .includes('}}');
 
-    setUrlSuggestions(filtered);
-    setShowUrlSuggestions(filtered.length > 0);
+    if (isEnvTriggered) {
+      setShowUrlSuggestions(false);
+    } else {
+      const filtered = value.trim()
+        ? urls.filter(u => u.toLowerCase().includes(value.toLowerCase()))
+        : urls;
+
+      setUrlSuggestions(filtered);
+      setShowUrlSuggestions(filtered.length > 0);
+    }
     setActiveSuggestionIndex(-1);
   };
 
@@ -1117,6 +1201,43 @@ export default function Dashboard() {
                       setShowUrlSuggestions(filtered.length > 0);
                     }}
                     onKeyDown={e => {
+                      if (
+                        showEnvSuggestions &&
+                        envAutocompleteField === 'url' &&
+                        envSuggestions.length > 0
+                      ) {
+                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                          e.preventDefault();
+                          setActiveEnvSuggestionIndex(prev =>
+                            prev < envSuggestions.length - 1 ? prev + 1 : 0
+                          );
+                          return;
+                        }
+                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                          e.preventDefault();
+                          setActiveEnvSuggestionIndex(prev =>
+                            prev > 0 ? prev - 1 : envSuggestions.length - 1
+                          );
+                          return;
+                        }
+                        if (e.key === 'Enter' || e.key === 'Tab') {
+                          e.preventDefault();
+                          if (
+                            activeEnvSuggestionIndex >= 0 &&
+                            activeEnvSuggestionIndex < envSuggestions.length
+                          ) {
+                            insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'url');
+                          }
+                          return;
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setShowEnvSuggestions(false);
+                          setActiveEnvSuggestionIndex(-1);
+                          return;
+                        }
+                      }
+
                       if (showUrlSuggestions && urlSuggestions.length > 0) {
                         if (e.key === 'ArrowDown' || e.key === 'PageDown') {
                           e.preventDefault();
@@ -1161,8 +1282,21 @@ export default function Dashboard() {
                         }
                       }
                     }}
+                    onKeyUp={e => {
+                      if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+                        const target = e.target as HTMLInputElement;
+                        checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
+                      }
+                    }}
+                    onClick={e => {
+                      const target = e.target as HTMLInputElement;
+                      checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
+                    }}
                     onBlur={() => {
-                      setTimeout(() => setShowUrlSuggestions(false), 200);
+                      setTimeout(() => {
+                        setShowUrlSuggestions(false);
+                        setShowEnvSuggestions(false);
+                      }, 200);
                     }}
                     placeholder="https://api.example.com/endpoint"
                     className="w-full pl-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
@@ -1208,6 +1342,37 @@ export default function Dashboard() {
                       ))}
                     </div>
                   )}
+                  {showEnvSuggestions &&
+                    envAutocompleteField === 'url' &&
+                    envSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                        <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
+                          Environment Variables (
+                          {environments.find(e => e.id === activeEnvironmentId)?.name ||
+                            'No Active Env'}
+                          )
+                        </div>
+                        {envSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
+                              index === activeEnvSuggestionIndex
+                                ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                                : 'hover:bg-zinc-900 text-zinc-300'
+                            }`}
+                            onMouseDown={() => insertEnvVariable(suggestion, 'url')}
+                            onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
+                          >
+                            <span>{`{{${suggestion}}}`}</span>
+                            <span className="text-[10px] text-zinc-500 font-sans">
+                              {environments
+                                .find(e => e.id === activeEnvironmentId)
+                                ?.variables.find(v => v.key === suggestion)?.value || ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -1353,7 +1518,7 @@ export default function Dashboard() {
               )}
 
               {activeTab === 'body' && (
-                <div className="flex-1 flex flex-col min-h-0 gap-2">
+                <div className="flex-1 flex flex-col min-h-0 gap-2 relative">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
                     <div className="flex items-center gap-2">
@@ -1377,11 +1542,97 @@ export default function Dashboard() {
                   <textarea
                     value={body}
                     onChange={e => {
-                      setBody(e.target.value);
+                      const val = e.target.value;
+                      setBody(val);
                       setPrettifyError(null);
+                      checkEnvAutocomplete(val, e.target.selectionStart || 0, 'body');
+                    }}
+                    onKeyUp={e => {
+                      if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+                        const target = e.target as HTMLTextAreaElement;
+                        checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
+                      }
+                    }}
+                    onClick={e => {
+                      const target = e.target as HTMLTextAreaElement;
+                      checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
+                    }}
+                    onKeyDown={e => {
+                      if (
+                        showEnvSuggestions &&
+                        envAutocompleteField === 'body' &&
+                        envSuggestions.length > 0
+                      ) {
+                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                          e.preventDefault();
+                          setActiveEnvSuggestionIndex(prev =>
+                            prev < envSuggestions.length - 1 ? prev + 1 : 0
+                          );
+                          return;
+                        }
+                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                          e.preventDefault();
+                          setActiveEnvSuggestionIndex(prev =>
+                            prev > 0 ? prev - 1 : envSuggestions.length - 1
+                          );
+                          return;
+                        }
+                        if (e.key === 'Enter' || e.key === 'Tab') {
+                          e.preventDefault();
+                          if (
+                            activeEnvSuggestionIndex >= 0 &&
+                            activeEnvSuggestionIndex < envSuggestions.length
+                          ) {
+                            insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'body');
+                          }
+                          return;
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setShowEnvSuggestions(false);
+                          setActiveEnvSuggestionIndex(-1);
+                          return;
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setShowEnvSuggestions(false);
+                      }, 200);
                     }}
                     className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
                   />
+                  {showEnvSuggestions &&
+                    envAutocompleteField === 'body' &&
+                    envSuggestions.length > 0 && (
+                      <div className="absolute top-12 left-4 right-4 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                        <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
+                          Environment Variables (
+                          {environments.find(e => e.id === activeEnvironmentId)?.name ||
+                            'No Active Env'}
+                          )
+                        </div>
+                        {envSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
+                              index === activeEnvSuggestionIndex
+                                ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                                : 'hover:bg-zinc-900 text-zinc-300'
+                            }`}
+                            onMouseDown={() => insertEnvVariable(suggestion, 'body')}
+                            onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
+                          >
+                            <span>{`{{${suggestion}}}`}</span>
+                            <span className="text-[10px] text-zinc-500 truncate max-w-[200px] font-sans">
+                              {environments
+                                .find(e => e.id === activeEnvironmentId)
+                                ?.variables.find(v => v.key === suggestion)?.value || ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </div>
               )}
 
