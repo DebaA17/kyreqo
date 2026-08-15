@@ -12,6 +12,8 @@ Kyreqo is split into:
 - **Frontend**: React (Vite) + TypeScript + Tailwind CSS (using **`pnpm`** as the package manager)
 
 All development scripts should be run from the repository root using the workspace shortcuts defined in the root `package.json`.
+> [!NOTE]
+> The command-line setup instructions below are specifically written for **Linux and macOS**. For **Windows**, adjust commands accordingly (e.g., using `python` instead of `python3` and backslashes for paths).
 
 ### Backend Local Setup
 
