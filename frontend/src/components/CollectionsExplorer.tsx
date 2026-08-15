@@ -8,6 +8,10 @@ import {
   Search,
   Trash2,
   Copy,
+  Upload,
+  X,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import useCollectionStore, { Collection, SavedRequest } from '../store/collectionStore';
 import { useAuthStore } from '../store/authStore';
@@ -20,6 +24,47 @@ interface CollectionsExplorerProps {
 
 interface TreeNode extends Collection {
   children: TreeNode[];
+}
+
+interface PostmanQueryParam {
+  key?: string;
+  value?: string;
+  disabled?: boolean;
+}
+
+interface PostmanHeader {
+  key?: string;
+  value?: string;
+  disabled?: boolean;
+}
+
+interface PostmanUrl {
+  raw?: string;
+  query?: PostmanQueryParam[];
+}
+
+interface PostmanRequest {
+  method?: string;
+  url?: string | PostmanUrl;
+  header?: PostmanHeader[];
+  body?: {
+    mode?: string;
+    raw?: string;
+  };
+}
+
+interface PostmanItem {
+  name?: string;
+  item?: PostmanItem[];
+  request?: PostmanRequest;
+}
+
+interface PostmanCollection {
+  info?: {
+    name?: string;
+    schema?: string;
+  };
+  item?: PostmanItem[];
 }
 
 const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
@@ -36,6 +81,11 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [newRequestName, setNewRequestName] = useState('');
   const [targetCollectionId, setTargetCollectionId] = useState<number | null>(null);
 
@@ -174,6 +224,185 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
     } catch (err) {
       alert('Failed to duplicate request.');
     }
+  };
+  const handleImportPostman = async () => {
+    if (!importFile) return;
+    if (!workspaceId) {
+      setImportError('Please select a workspace before importing.');
+      return;
+    }
+    setIsImporting(true);
+    setImportError(null);
+    setImportSuccess(null);
+
+    try {
+      const text = await importFile.text();
+
+      let postman: PostmanCollection;
+
+      try {
+        postman = JSON.parse(text);
+      } catch {
+        throw new Error('The selected file is not valid JSON.');
+      }
+
+      if (!postman.info?.name || !Array.isArray(postman.item)) {
+        throw new Error(
+          'Invalid Postman collection. Expected a Postman Collection v2.1 JSON file.'
+        );
+      }
+
+      if (postman.info.schema && !postman.info.schema.includes('/collection/v2.1')) {
+        throw new Error(
+          'Unsupported Postman collection format. Please export a Collection v2.1 file.'
+        );
+      }
+      // Create the root collection from info.name
+      const rootCollection = await createCollection({
+        name: postman.info.name,
+        workspace: workspaceId,
+        parent_collection: null,
+      });
+
+      if (!rootCollection) {
+        throw new Error('Failed to create the root collection.');
+      }
+
+      let requestCount = 0;
+      let collectionCount = 1;
+
+      const importItems = async (
+        items: PostmanItem[],
+        parentCollectionId: number
+      ): Promise<void> => {
+        for (const item of items) {
+          // Folder / nested collection
+          if (Array.isArray(item.item)) {
+            const collection = await createCollection({
+              name: item.name?.trim() || 'Untitled Folder',
+              workspace: workspaceId,
+              parent_collection: parentCollectionId,
+            });
+
+            if (!collection) {
+              throw new Error(`Failed to create folder "${item.name || 'Untitled Folder'}".`);
+            }
+
+            collectionCount++;
+
+            await importItems(item.item, collection.id);
+            continue;
+          }
+
+          if (item.request) {
+            const requestName = item.name?.trim() || 'Untitled Request';
+            const url = getPostmanUrl(item.request.url);
+
+            if (!url) {
+              console.warn(`Skipping "${requestName}" because it has no URL.`);
+              continue;
+            }
+
+            const method = (item.request.method || 'GET').toUpperCase();
+
+            const headers = getPostmanHeaders(item.request.header);
+
+            const queryParams = getPostmanQueryParams(item.request.url);
+
+            const body = item.request.body?.mode === 'raw' ? item.request.body.raw || '' : '';
+
+            await apiClient('/api/requests/', {
+              method: 'POST',
+              body: JSON.stringify({
+                collection: parentCollectionId,
+                name: requestName,
+                url,
+                method,
+                headers,
+                query_params: queryParams,
+                body,
+              }),
+            });
+
+            requestCount++;
+          }
+        }
+      };
+
+      await importItems(postman.item, rootCollection.id);
+
+      await fetchCollections(workspaceId);
+
+      setImportSuccess(
+        `Imported "${postman.info.name}" successfully — ${collectionCount} collection${
+          collectionCount === 1 ? '' : 's'
+        } and ${requestCount} request${requestCount === 1 ? '' : 's'}.`
+      );
+
+      setImportFile(null);
+    } catch (error) {
+      console.error('Postman import failed:', error);
+
+      setImportError(
+        error instanceof Error ? error.message : 'Failed to import Postman collection.'
+      );
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const getPostmanUrl = (url?: string | PostmanUrl): string => {
+    if (!url) return '';
+
+    if (typeof url === 'string') {
+      return url;
+    }
+
+    return url.raw || '';
+  };
+
+  const getPostmanHeaders = (headers?: PostmanHeader[]): Record<string, string> => {
+    const result: Record<string, string> = {};
+
+    headers?.forEach(header => {
+      if (header.key && !header.disabled) {
+        result[header.key] = header.value ?? '';
+      }
+    });
+
+    return result;
+  };
+
+  const getPostmanQueryParams = (url?: string | PostmanUrl): Record<string, string> => {
+    if (!url) return {};
+
+    if (typeof url === 'string') {
+      const queryIndex = url.indexOf('?');
+
+      if (queryIndex === -1) {
+        return {};
+      }
+
+      const queryString = url.slice(queryIndex + 1).split('#')[0];
+      const params = new URLSearchParams(queryString);
+      const result: Record<string, string> = {};
+
+      params.forEach((value, key) => {
+        result[key] = value;
+      });
+
+      return result;
+    }
+
+    const result: Record<string, string> = {};
+
+    url.query?.forEach(param => {
+      if (param.key && !param.disabled) {
+        result[param.key] = param.value ?? '';
+      }
+    });
+
+    return result;
   };
   const renderTree = (items: TreeNode[], level: number = 0) => {
     return items.map(item => {
@@ -319,16 +548,34 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
       {}
       <div className="flex items-center justify-between mb-2 select-none">
         <h3 className="text-xs font-bold text-zinc-400 tracking-wider uppercase">Collections</h3>
+
         {user && (
-          <button
-            onClick={() => {
-              setParentId(null);
-              setShowCreateModal(true);
-            }}
-            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition"
-          >
-            + New
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={!workspaceId}
+              onClick={() => {
+                setImportError(null);
+                setImportSuccess(null);
+                setImportFile(null);
+                setShowImportModal(true);
+              }}
+              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              title={workspaceId ? 'Import Postman collection' : 'Select a workspace first'}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Import
+            </button>
+
+            <button
+              onClick={() => {
+                setParentId(null);
+                setShowCreateModal(true);
+              }}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition"
+            >
+              + New
+            </button>
+          </div>
         )}
       </div>
 
@@ -377,6 +624,109 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
       </div>
 
       {}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Import Postman Collection</h3>
+
+                <p className="text-xs text-zinc-500 mt-1">
+                  Upload a Postman Collection v2.1 JSON export.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!isImporting) {
+                    setShowImportModal(false);
+                    setImportFile(null);
+                    setImportError(null);
+                    setImportSuccess(null);
+                  }
+                }}
+                disabled={isImporting}
+                className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {importError && (
+              <div className="flex gap-2 items-start p-3 mb-4 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <AlertCircle className="h-4 w-4 text-rose-400 flex-shrink-0 mt-0.5" />
+
+                <p className="text-xs text-rose-300">{importError}</p>
+              </div>
+            )}
+
+            {importSuccess && (
+              <div className="flex gap-2 items-start p-3 mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+
+                <p className="text-xs text-emerald-300">{importSuccess}</p>
+              </div>
+            )}
+
+            <label
+              htmlFor="postman-import-file"
+              className="block border border-dashed border-zinc-700 hover:border-indigo-500/50 rounded-xl p-8 text-center cursor-pointer transition bg-zinc-950/50"
+            >
+              <Upload className="h-8 w-8 mx-auto mb-3 text-zinc-500" />
+
+              <p className="text-sm text-zinc-300 font-medium">
+                {importFile ? importFile.name : 'Choose Postman JSON file'}
+              </p>
+
+              <p className="text-[11px] text-zinc-600 mt-1">Collection v2.1 JSON</p>
+
+              <input
+                id="postman-import-file"
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0] || null;
+
+                  setImportError(null);
+                  setImportSuccess(null);
+
+                  if (file && file.size > 10 * 1024 * 1024) {
+                    setImportError('File is too large. Maximum supported size is 10 MB.');
+                    setImportFile(null);
+                    return;
+                  }
+
+                  setImportFile(file);
+                }}
+              />
+            </label>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFile(null);
+                  setImportError(null);
+                  setImportSuccess(null);
+                }}
+                disabled={isImporting}
+                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleImportPostman}
+                disabled={!importFile || isImporting}
+                className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isImporting ? 'Importing...' : 'Import Collection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
@@ -386,6 +736,7 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
 
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Name *</label>
+
               <input
                 type="text"
                 value={newCollectionName}
@@ -408,6 +759,7 @@ const CollectionsExplorer: React.FC<CollectionsExplorerProps> = ({
               >
                 Cancel
               </button>
+
               <button
                 className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition disabled:opacity-50"
                 onClick={handleCreateCollection}
