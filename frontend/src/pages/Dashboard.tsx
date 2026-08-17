@@ -1730,13 +1730,13 @@ export default function Dashboard() {
 
             {}
             <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
-              <div className="flex items-center justify-between mb-3 gap-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
                     Response Console
                   </span>
                   {response !== null && (
-                    <>
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         onClick={async () => {
                           try {
@@ -1745,14 +1745,13 @@ export default function Dashboard() {
                                 ? response
                                 : JSON.stringify(response, null, 2)
                             );
-
                             setIsCopied(true);
                             setTimeout(() => setIsCopied(false), 2000);
                           } catch (err) {
                             console.error('Failed to copy:', err);
                           }
                         }}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
                       >
                         {isCopied ? (
                           <>
@@ -1766,10 +1765,9 @@ export default function Dashboard() {
                           </>
                         )}
                       </button>
-
                       <button
                         onClick={handleCopyCurl}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
                       >
                         {isCurlCopied ? (
                           <>
@@ -1779,28 +1777,30 @@ export default function Dashboard() {
                         ) : (
                           <>
                             <Terminal className="h-3 w-3" />
-                            Copy as cURL
+                            <span className="hidden xs:inline">Copy as cURL</span>
+                            <span className="xs:hidden">cURL</span>
                           </>
                         )}
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
+
                 {statusInfo && (
-                  <div className="flex gap-2 flex-wrap justify-end">
+                  <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
                     <span
-                      className={`text-xs px-2.5 py-0.5 rounded font-bold flex items-center gap-1
-        ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
-      `}
+                      className={`text-[10px] px-2 py-0.5 rounded font-bold flex items-center gap-1 whitespace-nowrap
+          ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
+        `}
                     >
                       {statusInfo.code === 0
                         ? 'FAIL'
                         : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
                     </span>
-                    <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
+                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
                       {statusInfo.time} ms
                     </span>
-                    <span className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded flex-shrink-0">
+                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
                       {formatSize(statusInfo.size)}
                     </span>
                   </div>
