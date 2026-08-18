@@ -7,7 +7,7 @@ requests>=2.31.0
 python-dotenv>=1.0.0
 bandit>=1.7.5
 dj-database-url>=2.1.0
-drf-spectacular>=0.27.0
+drf-spectacular>=0.30.0
 whitenoise>=6.0.0
 gunicorn==22.0.0
 django-health-check==3.17.0
