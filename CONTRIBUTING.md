@@ -12,6 +12,8 @@ Kyreqo is split into:
 - **Frontend**: React (Vite) + TypeScript + Tailwind CSS (using **`pnpm`** as the package manager)
 
 All development scripts should be run from the repository root using the workspace shortcuts defined in the root `package.json`.
+> [!NOTE]
+> The command-line setup instructions below are specifically written for **Linux and macOS**. For **Windows**, adjust commands accordingly (e.g., using `python` instead of `python3` and backslashes for paths).
 
 ### Backend Local Setup
 
@@ -88,6 +90,14 @@ We use `bandit` to scan Python code for security issues.
 ---
 
 ## 🌿 Git Workflow & Branches
+
+### ⚠️ IMPORTANT: Issue Assignment Rule
+
+Please do not start working on any issue until you are officially **assigned** by a maintainer.
+
+If you want to contribute to an issue, please leave a comment asking maintainers **[@DebaA17](https://github.com/DebaA17)** or **[@Ruchika402](https://github.com/Ruchika402)** for assignment first. Unassigned Pull Requests will not be accepted.
+
+---
 
 1. **Branch Names**: Use descriptive prefixes:
    - `feature/feature-name` (e.g., `feature/ssrf-proxy`)

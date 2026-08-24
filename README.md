@@ -24,6 +24,13 @@
   </a>
 </p>
 
+## 🛠️ Tech Stack
+
+- **Frontend:** React (Vite), TypeScript, Tailwind CSS, Zustand
+- **Backend:** Python, Django REST Framework
+- **Database:** PostgreSQL (Production) / SQLite (Local Default)
+- **Tooling & DevOps:** Docker, Docker Compose, pnpm
+
 ## ✨ Features
 
 - **🗂️ Workspaces:** Keep your projects organized with isolated environments and collections.

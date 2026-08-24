@@ -21,3 +21,14 @@ Built with Django REST Framework.
    python3 manage.py migrate
    python3 manage.py runserver
    ```
+
+## Running Tests
+
+To run the backend test suite, run the following command from the `backend/` directory:
+```bash
+python3 manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history
+```
+Alternatively, you can run them from the repository root using:
+```bash
+pnpm backend:test
+```

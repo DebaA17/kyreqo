@@ -5,6 +5,7 @@
   "scripts": {
     "frontend": "pnpm --filter kyreqo-frontend dev",
     "frontend:build": "pnpm --filter kyreqo-frontend build",
+    "frontend:test": "pnpm --filter kyreqo-frontend test",
     "lint": "pnpm --filter kyreqo-frontend lint",
     "format": "pnpm --filter kyreqo-frontend format",
     "format:check": "pnpm --filter kyreqo-frontend format:check",
