@@ -44,3 +44,6 @@ htmlcov/
 # Misc
 *.swp
 *.bak
+playwright-report/
+test-results/
+blob-report/
