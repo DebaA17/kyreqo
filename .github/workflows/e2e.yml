@@ -37,6 +37,9 @@ jobs:
         if: github.event_name == 'deployment_status'
         run: echo "BASE_URL=${{ github.event.deployment_status.target_url }}" >> $GITHUB_ENV
 
+      - name: Log Target URL
+        run: echo "Testing against URL: ${BASE_URL:-http://localhost:3000}"
+
       - name: Run Playwright E2E Tests
         run: pnpm frontend:test:e2e --project=chromium
 
