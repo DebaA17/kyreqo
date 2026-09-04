@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   e2e-tests:
+    name: e2e-tests
     if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
