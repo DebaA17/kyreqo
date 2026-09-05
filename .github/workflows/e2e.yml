@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: pnpm --filter kyreqo-frontend exec playwright install --with-deps chromium
 
       - name: Set Base URL for Deployment Status
         if: github.event_name == 'deployment_status'
