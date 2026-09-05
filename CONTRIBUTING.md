@@ -12,6 +12,7 @@ Kyreqo is split into:
 - **Frontend**: React (Vite) + TypeScript + Tailwind CSS (using **`pnpm`** as the package manager)
 
 All development scripts should be run from the repository root using the workspace shortcuts defined in the root `package.json`.
+
 > [!NOTE]
 > The command-line setup instructions below are specifically written for **Linux and macOS**. For **Windows**, adjust commands accordingly (e.g., using `python` instead of `python3` and backslashes for paths).
 
@@ -36,7 +37,6 @@ All development scripts should be run from the repository root using the workspa
 
 > [!TIP]
 > Once the backend is running, interactive Swagger/ReDoc API documentation is available locally at [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/). The production version is available at [https://kyreqo.vercel.app/api/docs/](https://kyreqo.vercel.app/api/docs/). Use these to explore and test endpoints while developing.
-
 
 ### Frontend Local Setup
 
@@ -70,7 +70,6 @@ If you prefer to run the entire stack (Frontend, Backend, and PostgreSQL databas
 
 ---
 
-
 ## 🧪 Testing & Code Quality
 
 ### Frontend Unit & Component Tests
@@ -85,18 +84,18 @@ pnpm frontend:test
 > Vitest is configured with `maxWorkers: 1` and `fileParallelism: false`, meaning tests run on a single worker instead of in parallel. This is intentional to keep the test run **CPU and memory efficient** across all development machines. Please don't override this configuration in your PRs.
 
 > [!WARNING]
-> **Mocking custom hooks (e.g. `useEnvironmentStore`)**: If a mock's return value includes an array or object, define it as a **stable reference outside the mock function call** rather than inline. Inline arrays/objects are recreated on every render, which can trigger **infinite render loops** in components that depend on referential equality (e.g. inside a `useEffect` dependency array).
+> **Mocking stores or custom hooks (e.g. `environmentStore`)**: If a mock's return value includes an array or object, define it as a **stable reference outside the mock function call** rather than inline. Inline arrays/objects are recreated on every render, which can trigger **infinite render loops** in components that depend on referential equality (e.g. inside a `useEffect` dependency array).
 >
 > ```ts
 > // ❌ Avoid: new array reference on every call
-> vi.mock("@/store/useEnvironmentStore", () => ({
->   useEnvironmentStore: () => ({ variables: [] }),
+> vi.mock("@/store/environmentStore", () => ({
+>   default: () => ({ variables: [] }),
 > }));
 >
 > // ✅ Do: stable reference defined outside the mock
 > const mockVariables = [];
-> vi.mock("@/store/useEnvironmentStore", () => ({
->   useEnvironmentStore: () => ({ variables: mockVariables }),
+> vi.mock("@/store/environmentStore", () => ({
+>   default: () => ({ variables: mockVariables }),
 > }));
 > ```
 
@@ -105,20 +104,24 @@ pnpm frontend:test
 Before opening a PR, make sure your code passes lint and formatting checks:
 
 - **Run lint checks**:
+
 ```bash
   pnpm lint
 ```
+
 - **Check formatting (Prettier)**:
+
 ```bash
   pnpm format:check
 ```
+
 - **Auto-format your code**:
+
 ```bash
   pnpm format
 ```
 
 ---
-
 
 ## 🔒 Security Practices & Auditing
 
