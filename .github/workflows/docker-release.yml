@@ -11,12 +11,6 @@ on:
       - ".github/workflows/e2e.yml"
   pull_request:
     branches: [main]
-    paths:
-      - "backend/**"
-      - "frontend/**"
-      - "docker-compose.yml"
-      - ".github/workflows/docker-release.yml"
-      - ".github/workflows/e2e.yml"
 
 permissions:
   contents: read
