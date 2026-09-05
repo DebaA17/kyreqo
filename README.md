@@ -38,7 +38,8 @@
 - **🔐 Environment Variables:** Define, switch, and reference dynamic variables easily across your headers and bodies.
 - **↺ Quick Restore & History:** Auto-save request history and instantly restore previous request parameters with a single click.
 - **🛡️ SSRF-Hardened Proxy:** Run requests securely through a backend proxy that blocks Server-Side Request Forgery (SSRF) bypasses and bypasses client CORS blocks.
-
+- **✉️ Postman Collection Import:** Upload your existing Postman Collection v2.1 JSON files to seamlessly import your requests, folder hierarchy, headers, and query parameters directly into a workspace.
+- **🧭 Interactive Onboarding Wizard:** A step-by-step guided tour for new users to help them understand the application layout and start testing APIs instantly
 ---
 
 ## 📐 Architecture Overview
@@ -59,3 +60,4 @@ Below is the request-response lifecycle:
 - 🔒 **[Security Policy](SECURITY.md)**
 - 🤝 **[Code of Conduct](CODE_OF_CONDUCT.md)**
 - 📄 **[MIT License](LICENSE)**
+- 📖 **[Interactive API Documentation](https://kyreqo.vercel.app/api/docs/)** - Explore and test Kyreqo's backend endpoints.

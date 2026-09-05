@@ -34,6 +34,10 @@ All development scripts should be run from the repository root using the workspa
    pnpm backend
    ```
 
+> [!TIP]
+> Once the backend is running, interactive Swagger/ReDoc API documentation is available locally at [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/). The production version is available at [https://kyreqo.vercel.app/api/docs/](https://kyreqo.vercel.app/api/docs/). Use these to explore and test endpoints while developing.
+
+
 ### Frontend Local Setup
 
 1. **Install dependencies using `pnpm`**:
@@ -66,6 +70,56 @@ If you prefer to run the entire stack (Frontend, Backend, and PostgreSQL databas
 
 ---
 
+
+## 🧪 Testing & Code Quality
+
+### Frontend Unit & Component Tests
+
+Frontend tests are run using **Vitest**. To run the full test suite locally:
+
+```bash
+pnpm frontend:test
+```
+
+> [!NOTE]
+> Vitest is configured with `maxWorkers: 1` and `fileParallelism: false`, meaning tests run on a single worker instead of in parallel. This is intentional to keep the test run **CPU and memory efficient** across all development machines. Please don't override this configuration in your PRs.
+
+> [!WARNING]
+> **Mocking custom hooks (e.g. `useEnvironmentStore`)**: If a mock's return value includes an array or object, define it as a **stable reference outside the mock function call** rather than inline. Inline arrays/objects are recreated on every render, which can trigger **infinite render loops** in components that depend on referential equality (e.g. inside a `useEffect` dependency array).
+>
+> ```ts
+> // ❌ Avoid: new array reference on every call
+> vi.mock("@/store/useEnvironmentStore", () => ({
+>   useEnvironmentStore: () => ({ variables: [] }),
+> }));
+>
+> // ✅ Do: stable reference defined outside the mock
+> const mockVariables = [];
+> vi.mock("@/store/useEnvironmentStore", () => ({
+>   useEnvironmentStore: () => ({ variables: mockVariables }),
+> }));
+> ```
+
+### Linting & Formatting
+
+Before opening a PR, make sure your code passes lint and formatting checks:
+
+- **Run lint checks**:
+```bash
+  pnpm lint
+```
+- **Check formatting (Prettier)**:
+```bash
+  pnpm format:check
+```
+- **Auto-format your code**:
+```bash
+  pnpm format
+```
+
+---
+
+
 ## 🔒 Security Practices & Auditing
 
 Security is a core focus of Kyreqo, especially preventing Server-Side Request Forgery (SSRF) and dependency vulnerabilities.
@@ -89,6 +143,16 @@ We use `bandit` to scan Python code for security issues.
 
 ---
 
+## 🎨 General UI Contribution Rules
+
+Any Pull Request that **modifies or introduces UI changes** must include:
+
+- **Screenshots or screen recordings** of the changes in **both Desktop and Mobile viewports**.
+
+This is required to verify responsiveness, layout alignment, and to catch any visual regressions before merge. PRs with UI changes but no viewport evidence will be sent back for revision.
+
+---
+
 ## 🌿 Git Workflow & Branches
 
 ### ⚠️ IMPORTANT: Issue Assignment Rule
@@ -107,5 +171,6 @@ If you want to contribute to an issue, please leave a comment asking maintainers
    - _Format_: `<prefix>: <description>`
    - _Example_: `feat(backend): add ssrf validation to proxy engine`
 3. **Submitting a PR**:
-   - Ensure all tests pass and security/linting checks (`bandit`, `pnpm audit`) are clean.
+   - Ensure all tests pass and security/linting checks (`bandit`, `pnpm audit`, `pnpm lint`, `pnpm format:check`) are clean.
+   - If your PR includes UI changes, attach Desktop and Mobile screenshots/recordings as described above.
    - Fill out the Pull Request template completely.
