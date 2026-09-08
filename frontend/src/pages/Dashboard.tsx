@@ -1830,6 +1830,23 @@ export default function Dashboard() {
     <span className="xs:hidden">Save</span>
   </>
 )}</button>
+
+{user && (
+  <button
+    onClick={() => {
+      if (collections.length > 0) {
+        setSaveCollectionId(collections[0].id);
+      }
+      setSaveRequestName(`cURL Request ${Date.now()}`);
+      setShowSaveRequestModal(true);
+    }}
+    className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+  >
+    <Folder className="h-3 w-3" />
+    <span className="hidden xs:inline">Save to Collection</span>
+    <span className="xs:hidden">Collection</span>
+  </button>
+)}
                     </div>
                   )}
                 </div>
