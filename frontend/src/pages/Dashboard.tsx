@@ -499,34 +499,34 @@ export default function Dashboard() {
   };
 
   const handleSaveCurl = () => {
-  try {
-    const curlCommand = generateCurlCommand();
+    try {
+      const curlCommand = generateCurlCommand();
 
-    const file = new Blob([curlCommand], {
-      type: 'text/plain',
-    });
+      const file = new Blob([curlCommand], {
+        type: 'text/plain',
+      });
 
-    const downloadUrl = URL.createObjectURL(file);
+      const downloadUrl = URL.createObjectURL(file);
 
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = `request_${Date.now()}.txt`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `request_${Date.now()}.txt`;
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    URL.revokeObjectURL(downloadUrl);
+      URL.revokeObjectURL(downloadUrl);
 
-    setIsCurlSaved(true);
+      setIsCurlSaved(true);
 
-    setTimeout(() => {
-      setIsCurlSaved(false);
-    }, 2000);
-  } catch (err) {
-    console.error('Failed to save cURL:', err);
-  }
-};
+      setTimeout(() => {
+        setIsCurlSaved(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to save cURL:', err);
+    }
+  };
   const handleSend = useCallback(async () => {
     setLoading(true);
     setResponse(null);
@@ -1815,38 +1815,39 @@ export default function Dashboard() {
                       </button>
 
                       <button
-  onClick={handleSaveCurl}
-  className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
->
-{isCurlSaved ? (
-  <>
-    <Check className="h-3 w-3 text-green-400" />
-    Saved!
-  </>
-) : (
-  <>
-    <Terminal className="h-3 w-3" />
-    <span className="hidden xs:inline">Save as cURL</span>
-    <span className="xs:hidden">Save</span>
-  </>
-)}</button>
+                        onClick={handleSaveCurl}
+                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                      >
+                        {isCurlSaved ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-400" />
+                            Saved!
+                          </>
+                        ) : (
+                          <>
+                            <Terminal className="h-3 w-3" />
+                            <span className="hidden xs:inline">Save as cURL</span>
+                            <span className="xs:hidden">Save</span>
+                          </>
+                        )}
+                      </button>
 
-{user && (
-  <button
-    onClick={() => {
-      if (collections.length > 0) {
-        setSaveCollectionId(collections[0].id);
-      }
-      setSaveRequestName(`cURL Request ${Date.now()}`);
-      setShowSaveRequestModal(true);
-    }}
-    className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
-  >
-    <Folder className="h-3 w-3" />
-    <span className="hidden xs:inline">Save to Collection</span>
-    <span className="xs:hidden">Collection</span>
-  </button>
-)}
+                      {user && (
+                        <button
+                          onClick={() => {
+                            if (collections.length > 0) {
+                              setSaveCollectionId(collections[0].id);
+                            }
+                            setSaveRequestName(`cURL Request ${Date.now()}`);
+                            setShowSaveRequestModal(true);
+                          }}
+                          className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Folder className="h-3 w-3" />
+                          <span className="hidden xs:inline">Save to Collection</span>
+                          <span className="xs:hidden">Collection</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
