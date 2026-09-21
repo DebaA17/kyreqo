@@ -121,10 +121,7 @@ export default function WebSocketPanel() {
       socket.onclose = event => {
         setStatus('DISCONNECTED');
         const reasonStr = event.reason ? ` (Reason: ${event.reason})` : '';
-        addLog(
-          'system',
-          `Disconnected from server. Code: ${event.code}${reasonStr}`
-        );
+        addLog('system', `Disconnected from server. Code: ${event.code}${reasonStr}`);
         wsRef.current = null;
       };
     } catch (err: unknown) {
@@ -324,8 +321,8 @@ export default function WebSocketPanel() {
                     msg.type === 'incoming'
                       ? 'bg-slate-900/90 border-emerald-500/30'
                       : msg.type === 'outgoing'
-                      ? 'bg-slate-900/90 border-cyan-500/30'
-                      : 'bg-slate-900/60 border-slate-700/60 text-slate-400'
+                        ? 'bg-slate-900/90 border-cyan-500/30'
+                        : 'bg-slate-900/60 border-slate-700/60 text-slate-400'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5 border-b border-slate-800 pb-1">
@@ -345,9 +342,7 @@ export default function WebSocketPanel() {
                           SYSTEM
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-500">
-                        {msg.timestamp}
-                      </span>
+                      <span className="text-[10px] text-slate-500">{msg.timestamp}</span>
                     </div>
 
                     <button
@@ -411,7 +406,9 @@ export default function WebSocketPanel() {
 
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-slate-500">
-                Tip: Press <kbd className="px-1 py-0.5 bg-slate-700 rounded text-slate-300">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-slate-700 rounded text-slate-300">Enter</kbd> to send
+                Tip: Press{' '}
+                <kbd className="px-1 py-0.5 bg-slate-700 rounded text-slate-300">Ctrl</kbd> +{' '}
+                <kbd className="px-1 py-0.5 bg-slate-700 rounded text-slate-300">Enter</kbd> to send
               </span>
               <button
                 onClick={handleSendMessage}

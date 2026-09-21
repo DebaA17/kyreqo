@@ -35,7 +35,9 @@ describe('WebSocketPanel', () => {
   it('allows typing a message in the input text area', () => {
     render(<WebSocketPanel />);
 
-    const textarea = screen.getByPlaceholderText(/Write text or JSON message.../i) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(
+      /Write text or JSON message.../i
+    ) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: '{"hello": "world"}' } });
 
     expect(textarea.value).toBe('{"hello": "world"}');
@@ -44,7 +46,9 @@ describe('WebSocketPanel', () => {
   it('prettifies JSON input when Prettify JSON button is clicked', () => {
     render(<WebSocketPanel />);
 
-    const textarea = screen.getByPlaceholderText(/Write text or JSON message.../i) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(
+      /Write text or JSON message.../i
+    ) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: '{"key":"value"}' } });
 
     const prettifyBtn = screen.getByRole('button', { name: /Prettify JSON/i });
@@ -56,7 +60,9 @@ describe('WebSocketPanel', () => {
   it('shows error message if attempting to prettify invalid JSON', () => {
     render(<WebSocketPanel />);
 
-    const textarea = screen.getByPlaceholderText(/Write text or JSON message.../i) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(
+      /Write text or JSON message.../i
+    ) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'invalid json text' } });
 
     const prettifyBtn = screen.getByRole('button', { name: /Prettify JSON/i });
@@ -65,4 +71,3 @@ describe('WebSocketPanel', () => {
     expect(screen.getByText('Invalid JSON format')).toBeDefined();
   });
 });
-
