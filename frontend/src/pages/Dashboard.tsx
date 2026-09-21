@@ -15,7 +15,10 @@ import {
   Settings,
   ImageIcon,
   Trash2,
+  Radio,
+  Globe,
 } from 'lucide-react';
+import WebSocketPanel from '../components/WebSocketPanel';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -204,6 +207,7 @@ const formatProfileError = (errorStr: string | null): string => {
 
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
+  const [requestType, setRequestType] = useState<'http' | 'websocket'>('http');
   const [isCopied, setIsCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [isCurlSaved, setIsCurlSaved] = useState(false);
@@ -1183,19 +1187,49 @@ export default function Dashboard() {
 
         {}
         <div className="flex-1 flex flex-col min-w-0">
-          {}
-          <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
-            {}
-            <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex flex-1 gap-2 min-w-0">
-                <select
-                  value={method}
-                  onChange={e =>
-                    setMethod(
-                      e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'
-                    )
-                  }
-                  className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24 flex-shrink-0
+          <div className="flex items-center gap-1 px-4 pt-3 pb-0 bg-[#0a0a0e] border-b border-[#1f1f29]">
+            <button
+              onClick={() => setRequestType('http')}
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition border-t border-x ${
+                requestType === 'http'
+                  ? 'bg-[#0c0c10] text-indigo-400 border-[#1f1f29] border-b-transparent'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              HTTP (REST)
+            </button>
+            <button
+              onClick={() => setRequestType('websocket')}
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition border-t border-x ${
+                requestType === 'websocket'
+                  ? 'bg-[#0c0c10] text-cyan-400 border-[#1f1f29] border-b-transparent'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              WebSocket
+            </button>
+          </div>
+
+          {requestType === 'websocket' ? (
+            <div className="flex-1 overflow-hidden">
+              <WebSocketPanel />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
+              <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
+                {}
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="flex flex-1 gap-2 min-w-0">
+                    <select
+                      value={method}
+                      onChange={e =>
+                        setMethod(
+                          e.target.value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'
+                        )
+                      }
+                      className={`px-3.5 py-2.5 rounded-lg border font-bold text-sm bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24 flex-shrink-0
         ${method === 'GET' ? 'text-emerald-400 border-emerald-500/20' : ''}
         ${method === 'POST' ? 'text-amber-400 border-amber-500/20' : ''}
         ${method === 'PUT' ? 'text-indigo-400 border-indigo-500/20' : ''}
@@ -1203,783 +1237,791 @@ export default function Dashboard() {
         ${method === 'DELETE' ? 'text-rose-400 border-rose-500/20' : ''}
         ${method === 'QUERY' ? 'text-purple-400 border-purple-500/20' : ''}
       `}
-                >
-                  <option value="GET">GET</option>
-                  <option value="POST">POST</option>
-                  <option value="PUT">PUT</option>
-                  <option value="PATCH">PATCH</option>
-                  <option value="DELETE">DELETE</option>
-                  <option value="QUERY">QUERY</option>
-                </select>
+                    >
+                      <option value="GET">GET</option>
+                      <option value="POST">POST</option>
+                      <option value="PUT">PUT</option>
+                      <option value="PATCH">PATCH</option>
+                      <option value="DELETE">DELETE</option>
+                      <option value="QUERY">QUERY</option>
+                    </select>
 
-                <div className="flex-1 relative min-w-0">
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={handleUrlChange}
-                    onFocus={() => {
-                      const saved = localStorage.getItem('urlHistory');
-                      let urls: string[] = [];
-                      try {
-                        urls = saved ? JSON.parse(saved) : [];
-                      } catch {
-                        urls = [];
-                      }
-                      const filtered = url.trim()
-                        ? urls.filter(u => u.toLowerCase().includes(url.toLowerCase()))
-                        : urls;
-                      setUrlSuggestions(filtered);
-                      setShowUrlSuggestions(filtered.length > 0);
-                    }}
-                    onKeyDown={e => {
-                      if (
-                        showEnvSuggestions &&
-                        envAutocompleteField === 'url' &&
-                        envSuggestions.length > 0
-                      ) {
-                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                          e.preventDefault();
-                          setActiveEnvSuggestionIndex(prev =>
-                            prev < envSuggestions.length - 1 ? prev + 1 : 0
-                          );
-                          return;
-                        }
-                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                          e.preventDefault();
-                          setActiveEnvSuggestionIndex(prev =>
-                            prev > 0 ? prev - 1 : envSuggestions.length - 1
-                          );
-                          return;
-                        }
-                        if (e.key === 'Enter' || e.key === 'Tab') {
-                          e.preventDefault();
-                          if (
-                            activeEnvSuggestionIndex >= 0 &&
-                            activeEnvSuggestionIndex < envSuggestions.length
-                          ) {
-                            insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'url');
+                    <div className="flex-1 relative min-w-0">
+                      <input
+                        type="text"
+                        value={url}
+                        onChange={handleUrlChange}
+                        onFocus={() => {
+                          const saved = localStorage.getItem('urlHistory');
+                          let urls: string[] = [];
+                          try {
+                            urls = saved ? JSON.parse(saved) : [];
+                          } catch {
+                            urls = [];
                           }
-                          return;
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          setShowEnvSuggestions(false);
-                          setActiveEnvSuggestionIndex(-1);
-                          return;
-                        }
-                      }
-
-                      if (showUrlSuggestions && urlSuggestions.length > 0) {
-                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                          e.preventDefault();
-                          setActiveSuggestionIndex(prev =>
-                            prev < urlSuggestions.length - 1 ? prev + 1 : 0
-                          );
-                          return;
-                        }
-                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                          e.preventDefault();
-                          setActiveSuggestionIndex(prev =>
-                            prev > 0 ? prev - 1 : urlSuggestions.length - 1
-                          );
-                          return;
-                        }
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
+                          const filtered = url.trim()
+                            ? urls.filter(u => u.toLowerCase().includes(url.toLowerCase()))
+                            : urls;
+                          setUrlSuggestions(filtered);
+                          setShowUrlSuggestions(filtered.length > 0);
+                        }}
+                        onKeyDown={e => {
                           if (
-                            activeSuggestionIndex >= 0 &&
-                            activeSuggestionIndex < urlSuggestions.length
+                            showEnvSuggestions &&
+                            envAutocompleteField === 'url' &&
+                            envSuggestions.length > 0
                           ) {
-                            handleSuggestionClick(urlSuggestions[activeSuggestionIndex]);
-                          } else {
-                            if (!loading) {
-                              handleSend();
+                            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                              e.preventDefault();
+                              setActiveEnvSuggestionIndex(prev =>
+                                prev < envSuggestions.length - 1 ? prev + 1 : 0
+                              );
+                              return;
+                            }
+                            if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                              e.preventDefault();
+                              setActiveEnvSuggestionIndex(prev =>
+                                prev > 0 ? prev - 1 : envSuggestions.length - 1
+                              );
+                              return;
+                            }
+                            if (e.key === 'Enter' || e.key === 'Tab') {
+                              e.preventDefault();
+                              if (
+                                activeEnvSuggestionIndex >= 0 &&
+                                activeEnvSuggestionIndex < envSuggestions.length
+                              ) {
+                                insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'url');
+                              }
+                              return;
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              setShowEnvSuggestions(false);
+                              setActiveEnvSuggestionIndex(-1);
+                              return;
                             }
                           }
-                          return;
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          setShowUrlSuggestions(false);
-                          setActiveSuggestionIndex(-1);
-                          return;
-                        }
-                      } else {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (!loading) {
-                            handleSend();
+
+                          if (showUrlSuggestions && urlSuggestions.length > 0) {
+                            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                              e.preventDefault();
+                              setActiveSuggestionIndex(prev =>
+                                prev < urlSuggestions.length - 1 ? prev + 1 : 0
+                              );
+                              return;
+                            }
+                            if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                              e.preventDefault();
+                              setActiveSuggestionIndex(prev =>
+                                prev > 0 ? prev - 1 : urlSuggestions.length - 1
+                              );
+                              return;
+                            }
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (
+                                activeSuggestionIndex >= 0 &&
+                                activeSuggestionIndex < urlSuggestions.length
+                              ) {
+                                handleSuggestionClick(urlSuggestions[activeSuggestionIndex]);
+                              } else {
+                                if (!loading) {
+                                  handleSend();
+                                }
+                              }
+                              return;
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              setShowUrlSuggestions(false);
+                              setActiveSuggestionIndex(-1);
+                              return;
+                            }
+                          } else {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (!loading) {
+                                handleSend();
+                              }
+                            }
                           }
-                        }
-                      }
-                    }}
-                    onKeyUp={e => {
-                      if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
-                        const target = e.target as HTMLInputElement;
-                        checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
-                      }
-                    }}
-                    onClick={e => {
-                      const target = e.target as HTMLInputElement;
-                      checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
-                    }}
-                    onBlur={() => {
-                      setTimeout(() => {
-                        setShowUrlSuggestions(false);
-                        setShowEnvSuggestions(false);
-                      }, 200);
-                    }}
-                    placeholder="https://api.example.com/endpoint"
-                    className="w-full pl-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
-                  />
-                  {url && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUrl('');
-                        setQueryParams([{ key: '', value: '', enabled: true }]);
-                        const saved = localStorage.getItem('urlHistory');
-                        let urls: string[] = [];
-                        try {
-                          urls = saved ? JSON.parse(saved) : [];
-                        } catch {
-                          urls = [];
-                        }
-                        setUrlSuggestions(urls);
-                        setShowUrlSuggestions(urls.length > 0);
-                        setActiveSuggestionIndex(-1);
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition p-1"
-                      title="Clear URL"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                  {showUrlSuggestions && urlSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
-                      {urlSuggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          className={`px-4 py-2 cursor-pointer text-sm transition ${
-                            index === activeSuggestionIndex
-                              ? 'bg-indigo-600/40 text-zinc-100 font-medium'
-                              : 'hover:bg-zinc-800 text-zinc-300'
-                          }`}
-                          onMouseDown={() => handleSuggestionClick(suggestion)}
-                          onMouseEnter={() => setActiveSuggestionIndex(index)}
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {showEnvSuggestions &&
-                    envAutocompleteField === 'url' &&
-                    envSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
-                        <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
-                          Environment Variables (
-                          {environments.find(e => e.id === activeEnvironmentId)?.name ||
-                            'No Active Env'}
-                          )
-                        </div>
-                        {envSuggestions.map((suggestion, index) => (
-                          <div
-                            key={index}
-                            className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
-                              index === activeEnvSuggestionIndex
-                                ? 'bg-indigo-600/40 text-zinc-100 font-medium'
-                                : 'hover:bg-zinc-900 text-zinc-300'
-                            }`}
-                            onMouseDown={() => insertEnvVariable(suggestion, 'url')}
-                            onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
-                          >
-                            <span>{`{{${suggestion}}}`}</span>
-                            <span className="text-[10px] text-zinc-500 font-sans">
-                              {environments
-                                .find(e => e.id === activeEnvironmentId)
-                                ?.variables.find(v => v.key === suggestion)?.value || ''}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                {lastRequest && (
-                  <button
-                    onClick={handleRestoreLastRequest}
-                    className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
-                    title="Restore last request"
-                  >
-                    ↺ Restore
-                  </button>
-                )}
-                <button
-                  onClick={handleResetRequest}
-                  className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
-                  title="Reset request to default"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset
-                </button>
-                <button
-                  onClick={handleSend}
-                  disabled={loading}
-                  className="flex-[2] md:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
-                >
-                  {loading ? (
-                    <>
-                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 fill-current" />
-                      Send
-                    </>
-                  )}
-                </button>
-                {user && (
-                  <button
-                    onClick={() => {
-                      if (collections.length > 0) {
-                        setSaveCollectionId(collections[0].id);
-                      }
-                      setShowSaveRequestModal(true);
-                    }}
-                    className="flex-1 md:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
-                  >
-                    <Folder className="h-4 w-4" />
-                    Save
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {}
-            <div className="flex border-b border-zinc-800 text-xs">
-              <button
-                onClick={() => setActiveTab('headers')}
-                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'headers' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Headers ({headers.filter(h => h.key).length})
-              </button>
-              <button
-                onClick={() => setActiveTab('body')}
-                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'body' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Body
-              </button>
-              <button
-                onClick={() => setActiveTab('params')}
-                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Params ({queryParams.filter(p => p.key).length})
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'settings' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Settings
-              </button>
-            </div>
-          </div>
-
-          {}
-          <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-[#08080b]">
-            {}
-            <div className="flex-1 border-r border-[#1f1f29] p-4 flex flex-col min-h-0 min-w-0">
-              {activeTab === 'headers' && (
-                <div className="flex-1 flex flex-col min-h-0 gap-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-semibold text-zinc-400">Request Headers</span>
-                    <button
-                      onClick={addHeader}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
-                    >
-                      + Add Header
-                    </button>
-                  </div>
-
-                  {/* Datalist definitions */}
-                  <datalist id="header-keys">
-                    {COMMON_HEADER_KEYS.map(key => (
-                      <option key={key} value={key} />
-                    ))}
-                  </datalist>
-
-                  <datalist id="header-values">
-                    {COMMON_HEADER_VALUES.map(val => (
-                      <option key={val} value={val} />
-                    ))}
-                  </datalist>
-
-                  <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                    {headers.map((h, idx) => (
-                      <div key={idx} className="flex gap-2 items-center w-full">
-                        <input
-                          type="checkbox"
-                          checked={h.enabled}
-                          onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
-                          className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
-                        />
-                        <input
-                          type="text"
-                          value={h.key}
-                          onChange={e => updateHeader(idx, 'key', e.target.value)}
-                          placeholder="Header Key"
-                          list="header-keys"
-                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                        />
-                        <input
-                          type="text"
-                          value={h.value}
-                          onChange={e => updateHeader(idx, 'value', e.target.value)}
-                          placeholder="Value"
-                          list="header-values"
-                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'body' && (
-                <div className="flex-1 flex flex-col min-h-0 gap-2 relative">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handlePrettifyJson}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
-                        title="Prettify JSON"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        Prettify
-                      </button>
-                      <span className="text-[10px] text-zinc-500">raw (application/json)</span>
-                    </div>
-                  </div>
-                  {prettifyError && (
-                    <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-400/10 border border-amber-400/20 rounded px-2 py-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {prettifyError}
-                    </div>
-                  )}
-                  <textarea
-                    value={body}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setBody(val);
-                      setPrettifyError(null);
-                      checkEnvAutocomplete(val, e.target.selectionStart || 0, 'body');
-                    }}
-                    onKeyUp={e => {
-                      if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
-                        const target = e.target as HTMLTextAreaElement;
-                        checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
-                      }
-                    }}
-                    onClick={e => {
-                      const target = e.target as HTMLTextAreaElement;
-                      checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
-                    }}
-                    onKeyDown={e => {
-                      if (
-                        showEnvSuggestions &&
-                        envAutocompleteField === 'body' &&
-                        envSuggestions.length > 0
-                      ) {
-                        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                          e.preventDefault();
-                          setActiveEnvSuggestionIndex(prev =>
-                            prev < envSuggestions.length - 1 ? prev + 1 : 0
-                          );
-                          return;
-                        }
-                        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                          e.preventDefault();
-                          setActiveEnvSuggestionIndex(prev =>
-                            prev > 0 ? prev - 1 : envSuggestions.length - 1
-                          );
-                          return;
-                        }
-                        if (e.key === 'Enter' || e.key === 'Tab') {
-                          e.preventDefault();
-                          if (
-                            activeEnvSuggestionIndex >= 0 &&
-                            activeEnvSuggestionIndex < envSuggestions.length
-                          ) {
-                            insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'body');
+                        }}
+                        onKeyUp={e => {
+                          if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+                            const target = e.target as HTMLInputElement;
+                            checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
                           }
-                          return;
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          setShowEnvSuggestions(false);
-                          setActiveEnvSuggestionIndex(-1);
-                          return;
-                        }
-                      }
-                    }}
-                    onBlur={() => {
-                      setTimeout(() => {
-                        setShowEnvSuggestions(false);
-                      }, 200);
-                    }}
-                    className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
-                  />
-                  {showEnvSuggestions &&
-                    envAutocompleteField === 'body' &&
-                    envSuggestions.length > 0 && (
-                      <div className="absolute top-12 left-4 right-4 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
-                        <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
-                          Environment Variables (
-                          {environments.find(e => e.id === activeEnvironmentId)?.name ||
-                            'No Active Env'}
-                          )
-                        </div>
-                        {envSuggestions.map((suggestion, index) => (
-                          <div
-                            key={index}
-                            className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
-                              index === activeEnvSuggestionIndex
-                                ? 'bg-indigo-600/40 text-zinc-100 font-medium'
-                                : 'hover:bg-zinc-900 text-zinc-300'
-                            }`}
-                            onMouseDown={() => insertEnvVariable(suggestion, 'body')}
-                            onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
-                          >
-                            <span>{`{{${suggestion}}}`}</span>
-                            <span className="text-[10px] text-zinc-500 truncate max-w-[200px] font-sans">
-                              {environments
-                                .find(e => e.id === activeEnvironmentId)
-                                ?.variables.find(v => v.key === suggestion)?.value || ''}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              )}
-
-              {activeTab === 'params' && (
-                <div className="flex-1 flex flex-col min-h-0 gap-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-semibold text-zinc-400">Query Parameters</span>
-                    <button
-                      onClick={addQueryParam}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
-                    >
-                      + Add Param
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                    {queryParams.map((p, idx) => (
-                      <div key={idx} className="flex gap-2 items-center w-full">
-                        <input
-                          type="checkbox"
-                          checked={p.enabled}
-                          onChange={e => updateQueryParam(idx, 'enabled', e.target.checked)}
-                          className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
-                        />
-                        <input
-                          type="text"
-                          value={p.key}
-                          onChange={e => updateQueryParam(idx, 'key', e.target.value)}
-                          placeholder="Param Key"
-                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                        />
-                        <input
-                          type="text"
-                          value={p.value}
-                          onChange={e => updateQueryParam(idx, 'value', e.target.value)}
-                          placeholder="Value"
-                          className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeQueryParam(idx)}
-                          className="text-zinc-500 hover:text-rose-400 transition flex-shrink-0 p-1"
-                          title="Remove parameter"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'settings' && (
-                <div className="flex-1 flex flex-col min-h-0 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-zinc-400">Request Settings</span>
-                    <p className="text-[10px] text-zinc-500">
-                      Configure client behavior for this request.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 max-w-md bg-zinc-900/30 p-4 border border-zinc-800/80 rounded-xl">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex flex-col">
-                        <label className="text-xs font-medium text-zinc-300">
-                          Request Timeout (ms)
-                        </label>
-                        <span className="text-[10px] text-zinc-500">
-                          Range: 100ms - 60,000ms (1 min)
-                        </span>
-                      </div>
-                      <input
-                        type="number"
-                        min={100}
-                        max={60000}
-                        value={timeoutMs}
-                        onChange={e => {
-                          const val = Number(e.target.value);
-                          setTimeoutMs(val);
+                        }}
+                        onClick={e => {
+                          const target = e.target as HTMLInputElement;
+                          checkEnvAutocomplete(target.value, target.selectionStart || 0, 'url');
                         }}
                         onBlur={() => {
-                          if (isNaN(timeoutMs) || timeoutMs < 100) {
-                            setTimeoutMs(100);
-                          } else if (timeoutMs > 60000) {
-                            setTimeoutMs(60000);
-                          }
+                          setTimeout(() => {
+                            setShowUrlSuggestions(false);
+                            setShowEnvSuggestions(false);
+                          }, 200);
                         }}
-                        className="w-28 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-semibold"
+                        placeholder="https://api.example.com/endpoint"
+                        className="w-full pl-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
                       />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {}
-            <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
-                    Response Console
-                  </span>
-                  {response !== null && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <button
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(
-                              typeof response === 'string'
-                                ? response
-                                : JSON.stringify(response, null, 2)
-                            );
-                            setIsCopied(true);
-                            setTimeout(() => setIsCopied(false), 2000);
-                          } catch (err) {
-                            console.error('Failed to copy:', err);
-                          }
-                        }}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
-                      >
-                        {isCopied ? (
-                          <>
-                            <Check className="h-3 w-3 text-green-400" />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3 w-3" />
-                            Copy
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={handleCopyCurl}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
-                      >
-                        {isCurlCopied ? (
-                          <>
-                            <Check className="h-3 w-3 text-green-400" />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Terminal className="h-3 w-3" />
-                            <span className="hidden xs:inline">Copy as cURL</span>
-                            <span className="xs:hidden">cURL</span>
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={handleSaveCurl}
-                        className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
-                      >
-                        {isCurlSaved ? (
-                          <>
-                            <Check className="h-3 w-3 text-green-400" />
-                            Saved!
-                          </>
-                        ) : (
-                          <>
-                            <Terminal className="h-3 w-3" />
-                            <span className="hidden xs:inline">Save as cURL</span>
-                            <span className="xs:hidden">Save</span>
-                          </>
-                        )}
-                      </button>
-
-                      {user && (
+                      {url && (
                         <button
+                          type="button"
                           onClick={() => {
-                            if (collections.length > 0) {
-                              setSaveCollectionId(collections[0].id);
+                            setUrl('');
+                            setQueryParams([{ key: '', value: '', enabled: true }]);
+                            const saved = localStorage.getItem('urlHistory');
+                            let urls: string[] = [];
+                            try {
+                              urls = saved ? JSON.parse(saved) : [];
+                            } catch {
+                              urls = [];
                             }
-                            setSaveRequestName(`cURL Request ${Date.now()}`);
-                            setShowSaveRequestModal(true);
+                            setUrlSuggestions(urls);
+                            setShowUrlSuggestions(urls.length > 0);
+                            setActiveSuggestionIndex(-1);
                           }}
-                          className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition p-1"
+                          title="Clear URL"
                         >
-                          <Folder className="h-3 w-3" />
-                          <span className="hidden xs:inline">Save to Collection</span>
-                          <span className="xs:hidden">Collection</span>
+                          <X className="h-4 w-4" />
                         </button>
                       )}
+                      {showUrlSuggestions && urlSuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                          {urlSuggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              className={`px-4 py-2 cursor-pointer text-sm transition ${
+                                index === activeSuggestionIndex
+                                  ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                                  : 'hover:bg-zinc-800 text-zinc-300'
+                              }`}
+                              onMouseDown={() => handleSuggestionClick(suggestion)}
+                              onMouseEnter={() => setActiveSuggestionIndex(index)}
+                            >
+                              {suggestion}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {showEnvSuggestions &&
+                        envAutocompleteField === 'url' &&
+                        envSuggestions.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                            <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
+                              Environment Variables (
+                              {environments.find(e => e.id === activeEnvironmentId)?.name ||
+                                'No Active Env'}
+                              )
+                            </div>
+                            {envSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
+                                  index === activeEnvSuggestionIndex
+                                    ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                                    : 'hover:bg-zinc-900 text-zinc-300'
+                                }`}
+                                onMouseDown={() => insertEnvVariable(suggestion, 'url')}
+                                onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
+                              >
+                                <span>{`{{${suggestion}}}`}</span>
+                                <span className="text-[10px] text-zinc-500 font-sans">
+                                  {environments
+                                    .find(e => e.id === activeEnvironmentId)
+                                    ?.variables.find(v => v.key === suggestion)?.value || ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                    {lastRequest && (
+                      <button
+                        onClick={handleRestoreLastRequest}
+                        className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0"
+                        title="Restore last request"
+                      >
+                        ↺ Restore
+                      </button>
+                    )}
+                    <button
+                      onClick={handleResetRequest}
+                      className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1 text-sm font-medium flex-shrink-0 cursor-pointer"
+                      title="Reset request to default"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reset
+                    </button>
+                    <button
+                      onClick={handleSend}
+                      disabled={loading}
+                      className="flex-[2] md:flex-none justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition shadow-md shadow-indigo-600/10 cursor-pointer"
+                    >
+                      {loading ? (
+                        <>
+                          <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 fill-current" />
+                          Send
+                        </>
+                      )}
+                    </button>
+                    {user && (
+                      <button
+                        onClick={() => {
+                          if (collections.length > 0) {
+                            setSaveCollectionId(collections[0].id);
+                          }
+                          setShowSaveRequestModal(true);
+                        }}
+                        className="flex-1 md:flex-none justify-center px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
+                      >
+                        <Folder className="h-4 w-4" />
+                        Save
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {statusInfo && (
-                  <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold flex items-center gap-1 whitespace-nowrap
-          ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
-        `}
-                    >
-                      {statusInfo.code === 0
-                        ? 'FAIL'
-                        : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
-                    </span>
-                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
-                      {statusInfo.time} ms
-                    </span>
-                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
-                      {formatSize(statusInfo.size)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Tab Switcher */}
-              {response !== null && (
-                <div className="flex gap-1 mb-2 border-b border-zinc-800">
+                {}
+                <div className="flex border-b border-zinc-800 text-xs">
                   <button
-                    onClick={() => setResponseTab('body')}
-                    className={`px-3 py-1.5 text-xs font-medium transition ${
-                      responseTab === 'body'
-                        ? 'text-indigo-400 border-b-2 border-indigo-500'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+                    onClick={() => setActiveTab('headers')}
+                    className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'headers' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+                  >
+                    Headers ({headers.filter(h => h.key).length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('body')}
+                    className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'body' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
                   >
                     Body
                   </button>
                   <button
-                    onClick={() => setResponseTab('headers')}
-                    className={`px-3 py-1.5 text-xs font-medium transition ${
-                      responseTab === 'headers'
-                        ? 'text-indigo-400 border-b-2 border-indigo-500'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+                    onClick={() => setActiveTab('params')}
+                    className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
                   >
-                    Headers{' '}
-                    {Object.keys(responseHeaders).length > 0 && (
-                      <span className="ml-1 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">
-                        {Object.keys(responseHeaders).length}
-                      </span>
-                    )}
+                    Params ({queryParams.filter(p => p.key).length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`py-2 px-4 font-semibold border-b-2 transition ${activeTab === 'settings' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+                  >
+                    Settings
                   </button>
                 </div>
-              )}
+              </div>
 
-              <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
-                {responseTab === 'body' ? (
-                  response ? (
-                    statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
-                      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
-                        <AlertCircle className="h-10 w-10 text-yellow-500" />
-
-                        <p className="font-semibold">Response too large to display</p>
-
-                        <p className="text-xs text-zinc-500">Size: {formatSize(statusInfo.size)}</p>
-
+              {}
+              <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-[#08080b]">
+                {}
+                <div className="flex-1 border-r border-[#1f1f29] p-4 flex flex-col min-h-0 min-w-0">
+                  {activeTab === 'headers' && (
+                    <div className="flex-1 flex flex-col min-h-0 gap-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-semibold text-zinc-400">Request Headers</span>
                         <button
-                          onClick={handleDownloadResponse}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
+                          onClick={addHeader}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
                         >
-                          Download JSON
+                          + Add Header
                         </button>
                       </div>
-                    ) : (
-                      <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
-                        {typeof response === 'string'
-                          ? response
-                          : JSON.stringify(response, null, 2)}
-                      </pre>
-                    )
-                  ) : loading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
-                      <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
-                      Retrieving target response...
+
+                      {/* Datalist definitions */}
+                      <datalist id="header-keys">
+                        {COMMON_HEADER_KEYS.map(key => (
+                          <option key={key} value={key} />
+                        ))}
+                      </datalist>
+
+                      <datalist id="header-values">
+                        {COMMON_HEADER_VALUES.map(val => (
+                          <option key={val} value={val} />
+                        ))}
+                      </datalist>
+
+                      <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                        {headers.map((h, idx) => (
+                          <div key={idx} className="flex gap-2 items-center w-full">
+                            <input
+                              type="checkbox"
+                              checked={h.enabled}
+                              onChange={e => updateHeader(idx, 'enabled', e.target.checked)}
+                              className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
+                            />
+                            <input
+                              type="text"
+                              value={h.key}
+                              onChange={e => updateHeader(idx, 'key', e.target.value)}
+                              placeholder="Header Key"
+                              list="header-keys"
+                              className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                            />
+                            <input
+                              type="text"
+                              value={h.value}
+                              onChange={e => updateHeader(idx, 'value', e.target.value)}
+                              placeholder="Value"
+                              list="header-values"
+                              className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-4 sm:p-6">
-                      <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
-                      <p className="font-semibold text-zinc-400">Response is empty</p>
-                      <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
-                        Enter a URL and click Send above to run an API request through the Kyreqo
-                        engine.
-                      </p>
+                  )}
+
+                  {activeTab === 'body' && (
+                    <div className="flex-1 flex flex-col min-h-0 gap-2 relative">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-semibold text-zinc-400">JSON Payload</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handlePrettifyJson}
+                            className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1"
+                            title="Prettify JSON"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            Prettify
+                          </button>
+                          <span className="text-[10px] text-zinc-500">raw (application/json)</span>
+                        </div>
+                      </div>
+                      {prettifyError && (
+                        <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-400/10 border border-amber-400/20 rounded px-2 py-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {prettifyError}
+                        </div>
+                      )}
+                      <textarea
+                        value={body}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setBody(val);
+                          setPrettifyError(null);
+                          checkEnvAutocomplete(val, e.target.selectionStart || 0, 'body');
+                        }}
+                        onKeyUp={e => {
+                          if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+                            const target = e.target as HTMLTextAreaElement;
+                            checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
+                          }
+                        }}
+                        onClick={e => {
+                          const target = e.target as HTMLTextAreaElement;
+                          checkEnvAutocomplete(target.value, target.selectionStart || 0, 'body');
+                        }}
+                        onKeyDown={e => {
+                          if (
+                            showEnvSuggestions &&
+                            envAutocompleteField === 'body' &&
+                            envSuggestions.length > 0
+                          ) {
+                            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                              e.preventDefault();
+                              setActiveEnvSuggestionIndex(prev =>
+                                prev < envSuggestions.length - 1 ? prev + 1 : 0
+                              );
+                              return;
+                            }
+                            if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                              e.preventDefault();
+                              setActiveEnvSuggestionIndex(prev =>
+                                prev > 0 ? prev - 1 : envSuggestions.length - 1
+                              );
+                              return;
+                            }
+                            if (e.key === 'Enter' || e.key === 'Tab') {
+                              e.preventDefault();
+                              if (
+                                activeEnvSuggestionIndex >= 0 &&
+                                activeEnvSuggestionIndex < envSuggestions.length
+                              ) {
+                                insertEnvVariable(envSuggestions[activeEnvSuggestionIndex], 'body');
+                              }
+                              return;
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              setShowEnvSuggestions(false);
+                              setActiveEnvSuggestionIndex(-1);
+                              return;
+                            }
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setShowEnvSuggestions(false);
+                          }, 200);
+                        }}
+                        className="flex-1 p-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-700 resize-none leading-relaxed"
+                      />
+                      {showEnvSuggestions &&
+                        envAutocompleteField === 'body' &&
+                        envSuggestions.length > 0 && (
+                          <div className="absolute top-12 left-4 right-4 bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                            <div className="px-3 py-1.5 border-b border-zinc-900 bg-zinc-900/30 text-[10px] font-bold text-zinc-500 tracking-wider uppercase font-sans">
+                              Environment Variables (
+                              {environments.find(e => e.id === activeEnvironmentId)?.name ||
+                                'No Active Env'}
+                              )
+                            </div>
+                            {envSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className={`px-4 py-2 cursor-pointer text-xs font-mono transition flex items-center justify-between ${
+                                  index === activeEnvSuggestionIndex
+                                    ? 'bg-indigo-600/40 text-zinc-100 font-medium'
+                                    : 'hover:bg-zinc-900 text-zinc-300'
+                                }`}
+                                onMouseDown={() => insertEnvVariable(suggestion, 'body')}
+                                onMouseEnter={() => setActiveEnvSuggestionIndex(index)}
+                              >
+                                <span>{`{{${suggestion}}}`}</span>
+                                <span className="text-[10px] text-zinc-500 truncate max-w-[200px] font-sans">
+                                  {environments
+                                    .find(e => e.id === activeEnvironmentId)
+                                    ?.variables.find(v => v.key === suggestion)?.value || ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                     </div>
-                  )
-                ) : (
-                  <div className="flex-1 p-3 sm:p-4 overflow-auto">
-                    {Object.keys(responseHeaders).length > 0 ? (
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b border-zinc-800">
-                            <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
-                            <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.entries(responseHeaders).map(([key, value]) => (
-                            <tr
-                              key={key}
-                              className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
+                  )}
+
+                  {activeTab === 'params' && (
+                    <div className="flex-1 flex flex-col min-h-0 gap-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-semibold text-zinc-400">
+                          Query Parameters
+                        </span>
+                        <button
+                          onClick={addQueryParam}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                        >
+                          + Add Param
+                        </button>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                        {queryParams.map((p, idx) => (
+                          <div key={idx} className="flex gap-2 items-center w-full">
+                            <input
+                              type="checkbox"
+                              checked={p.enabled}
+                              onChange={e => updateQueryParam(idx, 'enabled', e.target.checked)}
+                              className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 h-4 w-4 flex-shrink-0"
+                            />
+                            <input
+                              type="text"
+                              value={p.key}
+                              onChange={e => updateQueryParam(idx, 'key', e.target.value)}
+                              placeholder="Param Key"
+                              className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                            />
+                            <input
+                              type="text"
+                              value={p.value}
+                              onChange={e => updateQueryParam(idx, 'value', e.target.value)}
+                              placeholder="Value"
+                              className="flex-1 min-w-0 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeQueryParam(idx)}
+                              className="text-zinc-500 hover:text-rose-400 transition flex-shrink-0 p-1"
+                              title="Remove parameter"
                             >
-                              <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
-                                {key}
-                              </td>
-                              <td className="py-1.5 text-zinc-300 font-mono text-[11px] break-all">
-                                {value}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
-                        No headers received
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'settings' && (
+                    <div className="flex-1 flex flex-col min-h-0 gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-semibold text-zinc-400">
+                          Request Settings
+                        </span>
+                        <p className="text-[10px] text-zinc-500">
+                          Configure client behavior for this request.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-2 max-w-md bg-zinc-900/30 p-4 border border-zinc-800/80 rounded-xl">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex flex-col">
+                            <label className="text-xs font-medium text-zinc-300">
+                              Request Timeout (ms)
+                            </label>
+                            <span className="text-[10px] text-zinc-500">
+                              Range: 100ms - 60,000ms (1 min)
+                            </span>
+                          </div>
+                          <input
+                            type="number"
+                            min={100}
+                            max={60000}
+                            value={timeoutMs}
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setTimeoutMs(val);
+                            }}
+                            onBlur={() => {
+                              if (isNaN(timeoutMs) || timeoutMs < 100) {
+                                setTimeoutMs(100);
+                              } else if (timeoutMs > 60000) {
+                                setTimeoutMs(60000);
+                              }
+                            }}
+                            className="w-28 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {}
+                <div className="flex-1 p-4 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                      <span className="text-xs font-semibold text-zinc-400 flex-shrink-0">
+                        Response Console
+                      </span>
+                      {response !== null && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(
+                                  typeof response === 'string'
+                                    ? response
+                                    : JSON.stringify(response, null, 2)
+                                );
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2000);
+                              } catch (err) {
+                                console.error('Failed to copy:', err);
+                              }
+                            }}
+                            className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                          >
+                            {isCopied ? (
+                              <>
+                                <Check className="h-3 w-3 text-green-400" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={handleCopyCurl}
+                            className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                          >
+                            {isCurlCopied ? (
+                              <>
+                                <Check className="h-3 w-3 text-green-400" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Terminal className="h-3 w-3" />
+                                <span className="hidden xs:inline">Copy as cURL</span>
+                                <span className="xs:hidden">cURL</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={handleSaveCurl}
+                            className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                          >
+                            {isCurlSaved ? (
+                              <>
+                                <Check className="h-3 w-3 text-green-400" />
+                                Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Terminal className="h-3 w-3" />
+                                <span className="hidden xs:inline">Save as cURL</span>
+                                <span className="xs:hidden">Save</span>
+                              </>
+                            )}
+                          </button>
+
+                          {user && (
+                            <button
+                              onClick={() => {
+                                if (collections.length > 0) {
+                                  setSaveCollectionId(collections[0].id);
+                                }
+                                setSaveRequestName(`cURL Request ${Date.now()}`);
+                                setShowSaveRequestModal(true);
+                              }}
+                              className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition flex items-center gap-1 whitespace-nowrap"
+                            >
+                              <Folder className="h-3 w-3" />
+                              <span className="hidden xs:inline">Save to Collection</span>
+                              <span className="xs:hidden">Collection</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {statusInfo && (
+                      <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-bold flex items-center gap-1 whitespace-nowrap
+          ${statusInfo.code >= 200 && statusInfo.code < 300 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
+        `}
+                        >
+                          {statusInfo.code === 0
+                            ? 'FAIL'
+                            : `${statusInfo.code} ${getStatusText(statusInfo.code)}`}
+                        </span>
+                        <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
+                          {statusInfo.time} ms
+                        </span>
+                        <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded whitespace-nowrap">
+                          {formatSize(statusInfo.size)}
+                        </span>
                       </div>
                     )}
                   </div>
-                )}
+
+                  {/* Tab Switcher */}
+                  {response !== null && (
+                    <div className="flex gap-1 mb-2 border-b border-zinc-800">
+                      <button
+                        onClick={() => setResponseTab('body')}
+                        className={`px-3 py-1.5 text-xs font-medium transition ${
+                          responseTab === 'body'
+                            ? 'text-indigo-400 border-b-2 border-indigo-500'
+                            : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        Body
+                      </button>
+                      <button
+                        onClick={() => setResponseTab('headers')}
+                        className={`px-3 py-1.5 text-xs font-medium transition ${
+                          responseTab === 'headers'
+                            ? 'text-indigo-400 border-b-2 border-indigo-500'
+                            : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        Headers{' '}
+                        {Object.keys(responseHeaders).length > 0 && (
+                          <span className="ml-1 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">
+                            {Object.keys(responseHeaders).length}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex-1 bg-[#07070b] border border-zinc-800/80 rounded-xl overflow-hidden flex flex-col min-h-0">
+                    {responseTab === 'body' ? (
+                      response ? (
+                        statusInfo && statusInfo.size > MAX_RENDER_SIZE ? (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-400">
+                            <AlertCircle className="h-10 w-10 text-yellow-500" />
+
+                            <p className="font-semibold">Response too large to display</p>
+
+                            <p className="text-xs text-zinc-500">
+                              Size: {formatSize(statusInfo.size)}
+                            </p>
+
+                            <button
+                              onClick={handleDownloadResponse}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-white"
+                            >
+                              Download JSON
+                            </button>
+                          </div>
+                        ) : (
+                          <pre className="flex-1 p-3 sm:p-4 overflow-auto text-xs font-mono text-indigo-300 leading-relaxed select-text whitespace-pre-wrap break-all">
+                            {typeof response === 'string'
+                              ? response
+                              : JSON.stringify(response, null, 2)}
+                          </pre>
+                        )
+                      ) : loading ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-4">
+                          <span className="h-7 w-7 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2"></span>
+                          Retrieving target response...
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs text-center p-4 sm:p-6">
+                          <Terminal className="h-8 w-8 text-zinc-700 mb-2" />
+                          <p className="font-semibold text-zinc-400">Response is empty</p>
+                          <p className="text-[10px] text-zinc-600 mt-1 max-w-[240px]">
+                            Enter a URL and click Send above to run an API request through the
+                            Kyreqo engine.
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="flex-1 p-3 sm:p-4 overflow-auto">
+                        {Object.keys(responseHeaders).length > 0 ? (
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-zinc-800">
+                                <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
+                                <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(responseHeaders).map(([key, value]) => (
+                                <tr
+                                  key={key}
+                                  className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
+                                >
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
+                                    {key}
+                                  </td>
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px] break-all">
+                                    {value}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
+                            No headers received
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
