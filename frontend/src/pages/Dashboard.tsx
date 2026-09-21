@@ -15,7 +15,10 @@ import {
   Settings,
   ImageIcon,
   Trash2,
+  Radio,
+  Globe,
 } from 'lucide-react';
+import WebSocketPanel from '../components/WebSocketPanel';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -204,6 +207,7 @@ const formatProfileError = (errorStr: string | null): string => {
 
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
+  const [requestType, setRequestType] = useState<'http' | 'websocket'>('http');
   const [isCopied, setIsCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [isCurlSaved, setIsCurlSaved] = useState(false);
@@ -1183,8 +1187,38 @@ export default function Dashboard() {
 
         {}
         <div className="flex-1 flex flex-col min-w-0">
-          {}
-          <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
+          <div className="flex items-center gap-1 px-4 pt-3 pb-0 bg-[#0a0a0e] border-b border-[#1f1f29]">
+            <button
+              onClick={() => setRequestType('http')}
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition border-t border-x ${
+                requestType === 'http'
+                  ? 'bg-[#0c0c10] text-indigo-400 border-[#1f1f29] border-b-transparent'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              HTTP (REST)
+            </button>
+            <button
+              onClick={() => setRequestType('websocket')}
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition border-t border-x ${
+                requestType === 'websocket'
+                  ? 'bg-[#0c0c10] text-cyan-400 border-[#1f1f29] border-b-transparent'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              WebSocket
+            </button>
+          </div>
+
+          {requestType === 'websocket' ? (
+            <div className="flex-1 overflow-hidden">
+              <WebSocketPanel />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
+              <div className="p-4 bg-[#0a0a0e] border-b border-[#1f1f29] flex flex-col gap-3">
             {}
             <div className="flex flex-col md:flex-row gap-2">
               <div className="flex flex-1 gap-2 min-w-0">
@@ -1981,7 +2015,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </main>
+        )}
+      </div>
+    </main>
 
       {}
       {showResetConfirmModal && (
