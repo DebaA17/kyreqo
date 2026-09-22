@@ -17,8 +17,10 @@ import {
   Trash2,
   Radio,
   Globe,
+  Zap,
 } from 'lucide-react';
 import WebSocketPanel from '../components/WebSocketPanel';
+import BenchmarkModal from '../components/BenchmarkModal';
 import { useAuthStore } from '../store/authStore';
 import WorkspaceSwitcher from '../components/WorkspaceSwitcher';
 import CollectionsExplorer from '../components/CollectionsExplorer';
@@ -208,6 +210,7 @@ const formatProfileError = (errorStr: string | null): string => {
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
   const [requestType, setRequestType] = useState<'http' | 'websocket'>('http');
+  const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [isCurlSaved, setIsCurlSaved] = useState(false);
@@ -1490,6 +1493,15 @@ export default function Dashboard() {
                         Save
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setShowBenchmarkModal(true)}
+                      className="flex-1 md:flex-none justify-center px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:text-amber-300 rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer flex-shrink-0"
+                      title="Run API Performance & Latency Benchmark"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Benchmark
+                    </button>
                   </div>
                 </div>
 
@@ -2131,6 +2143,15 @@ export default function Dashboard() {
         </div>
       )}
       <OnboardingWizard />
+      <BenchmarkModal
+        isOpen={showBenchmarkModal}
+        onClose={() => setShowBenchmarkModal(false)}
+        url={url}
+        method={method}
+        headers={headers}
+        body={body}
+        currentWorkspaceId={currentWorkspaceId}
+      />
     </div>
   );
 }
