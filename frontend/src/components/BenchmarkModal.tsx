@@ -168,10 +168,7 @@ export default function BenchmarkModal({
         ]);
       } catch {
         const duration = Math.round(performance.now() - startTime);
-        setResults(prev => [
-          ...prev,
-          { index: i + 1, duration, status: 0, success: false },
-        ]);
+        setResults(prev => [...prev, { index: i + 1, duration, status: 0, success: false }]);
       }
 
       setCompletedCount(i + 1);
@@ -393,9 +390,7 @@ export default function BenchmarkModal({
                         ) : (
                           <XCircle className="w-3.5 h-3.5 text-rose-400" />
                         )}
-                        <span className="text-zinc-300 font-semibold">
-                          #{res.index}
-                        </span>
+                        <span className="text-zinc-300 font-semibold">#{res.index}</span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
                             res.success
@@ -406,9 +401,7 @@ export default function BenchmarkModal({
                           Status {res.status || 'ERR'}
                         </span>
                       </div>
-                      <span className="text-zinc-400 text-[11px]">
-                        {res.duration} ms
-                      </span>
+                      <span className="text-zinc-400 text-[11px]">{res.duration} ms</span>
                     </div>
                   ))}
                 </div>
@@ -420,4 +413,3 @@ export default function BenchmarkModal({
     </div>
   );
 }
-
