@@ -1,0 +1,87 @@
+diff --git a/lib/compile.js b/lib/compile.js
+index dce69beb90ece5c3b0ca234a949418f9f34eedbc..63e212e65650ed75126681ad691ad1ed3109f4c2 100644
+--- a/lib/compile.js
++++ b/lib/compile.js
+@@ -4,7 +4,12 @@ const fill = require('fill-range');
+ const utils = require('./utils');
+ 
+ const compile = (ast, options = {}) => {
+-  const walk = (node, parent = {}) => {
++  const maxDepth = options.maxDepth === undefined ? 100 : options.maxDepth;
++  const walk = (node, parent = {}, depth = 0) => {
++    if (depth > maxDepth) {
++      throw new RangeError('AST depth exceeds the maximum allowed depth');
++    }
++
+     const invalidBlock = utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+     const invalid = invalidBlock === true || invalidNode === true;
+@@ -47,7 +52,7 @@ const compile = (ast, options = {}) => {
+ 
+     if (node.nodes) {
+       for (const child of node.nodes) {
+-        output += walk(child, node);
++        output += walk(child, node, depth + 1);
+       }
+     }
+ 
+diff --git a/lib/expand.js b/lib/expand.js
+index 35b2c41d6afdb8f0197959e26079f266e48370d3..5c3f90841c47b74079cf102bfb65efacbeba056d 100644
+--- a/lib/expand.js
++++ b/lib/expand.js
+@@ -32,8 +32,13 @@ const append = (queue = '', stash = '', enclose = false) => {
+ 
+ const expand = (ast, options = {}) => {
+   const rangeLimit = options.rangeLimit === undefined ? 1000 : options.rangeLimit;
++  const maxDepth = options.maxDepth === undefined ? 100 : options.maxDepth;
++
++  const walk = (node, parent = {}, depth = 0) => {
++    if (depth > maxDepth) {
++      throw new RangeError('AST depth exceeds the maximum allowed depth');
++    }
+ 
+-  const walk = (node, parent = {}) => {
+     node.queue = [];
+ 
+     let p = parent;
+@@ -100,7 +105,7 @@ const expand = (ast, options = {}) => {
+       }
+ 
+       if (child.nodes) {
+-        walk(child, node);
++        walk(child, node, depth + 1);
+       }
+     }
+ 
+diff --git a/lib/stringify.js b/lib/stringify.js
+index 8bcf872c31894f81a8c64d9202fd607e4fd7ea2b..e5e4dbd8545e577e87877fcb0234494e2a1739b8 100644
+--- a/lib/stringify.js
++++ b/lib/stringify.js
+@@ -3,7 +3,12 @@
+ const utils = require('./utils');
+ 
+ module.exports = (ast, options = {}) => {
+-  const stringify = (node, parent = {}) => {
++  const maxDepth = options.maxDepth === undefined ? 100 : options.maxDepth;
++  const stringify = (node, parent = {}, depth = 0) => {
++    if (depth > maxDepth) {
++      throw new RangeError('AST depth exceeds the maximum allowed depth');
++    }
++
+     const invalidBlock = options.escapeInvalid && utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+     let output = '';
+@@ -21,7 +26,7 @@ module.exports = (ast, options = {}) => {
+ 
+     if (node.nodes) {
+       for (const child of node.nodes) {
+-        output += stringify(child);
++        output += stringify(child, node, depth + 1);
+       }
+     }
+     return output;
+@@ -29,4 +34,3 @@ module.exports = (ast, options = {}) => {
+ 
+   return stringify(ast);
+ };
+-

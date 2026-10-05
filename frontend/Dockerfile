@@ -12,6 +12,7 @@ RUN npm install -g pnpm
 # Copy workspace and lock files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY frontend/package.json ./frontend/
+COPY patches/ ./patches/
 
 # Install dependencies using workspace filter
 RUN pnpm install --filter kyreqo-frontend... --no-frozen-lockfile
