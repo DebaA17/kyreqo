@@ -70,3 +70,20 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+
+  snyk:
+    name: Snyk Open-Source & Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Snyk Open-Source Scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+
+
