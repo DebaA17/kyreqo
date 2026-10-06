@@ -34,5 +34,7 @@ overrides:
   undici@>=8.0.0 <8.10.2: ^8.10.2
   undici@>=8.1.0 <8.10.2: ^8.10.2
   undici@>=8.10.0 <8.10.2: ^8.10.2
+  postcss-selector-parser@<7.1.6: ^7.1.6
+  source-map-js@>=1.0.0 <1.2.2: ^1.2.2
 patchedDependencies:
   braces@3.0.3: patches/braces@3.0.3.patch
