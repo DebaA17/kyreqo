@@ -19,6 +19,7 @@ import {
   Globe,
   Zap,
 } from 'lucide-react';
+import GraphQLPanel from '../components/GraphQLPanel';
 import WebSocketPanel from '../components/WebSocketPanel';
 import BenchmarkModal from '../components/BenchmarkModal';
 import { useAuthStore } from '../store/authStore';
@@ -209,7 +210,7 @@ const formatProfileError = (errorStr: string | null): string => {
 
 export default function Dashboard() {
   const { openWizard } = useOnboardingStore();
-  const [requestType, setRequestType] = useState<'http' | 'websocket'>('http');
+  const [requestType, setRequestType] = useState<'http' | 'websocket' | 'graphql'>('http');
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
@@ -1213,11 +1214,26 @@ export default function Dashboard() {
               <Radio className="w-3.5 h-3.5" />
               WebSocket
             </button>
+            <button
+              onClick={() => setRequestType('graphql')}
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition border-t border-x ${
+                requestType === 'graphql'
+                  ? 'bg-[#0c0c10] text-pink-400 border-[#1f1f29] border-b-transparent'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              GraphQL
+            </button>
           </div>
 
           {requestType === 'websocket' ? (
             <div className="flex-1 overflow-hidden">
               <WebSocketPanel />
+            </div>
+          ) : requestType === 'graphql' ? (
+            <div className="flex-1 overflow-hidden">
+              <GraphQLPanel />
             </div>
           ) : (
             <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
