@@ -1,0 +1,68 @@
+name: Contributor Welcome Bot
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  welcome-issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome New Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const author = issue.user.login;
+            
+            const message = `Welcome @${author}! 🎉
+            
+            Thank you for creating this issue. Please make sure to:
+            - ✅ Check if an issue already exists
+            - ✅ Follow the issue template (if applicable)
+            - ✅ Wait for a maintainer to assign you before working on it
+            
+            For more guidance, check out our [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md).`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: message
+            });
+
+  welcome-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome New PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            
+            const message = `Thanks for your contribution @${author}! 🚀
+            
+            Before we review, please ensure:
+            - ✅ You are assigned to the related issue
+            - ✅ All CI checks are passing
+            - ✅ Screenshots added for UI changes
+            - ✅ PR description is complete (include \`Closes #issue-number\`)
+            
+            See our [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for more details.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: message
+            });

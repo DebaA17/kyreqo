@@ -36,6 +36,8 @@
 - **🗂️ Workspaces:** Keep your projects organized with isolated environments and collections.
 - **📂 Collections & Requests:** Build, order, and save your API requests into folders.
 - **🔐 Environment Variables:** Define, switch, and reference dynamic variables easily across your headers and bodies.
+- **⚡ Real-Time WebSockets:** Connect to `ws://` and `wss://` endpoints, stream live messages, auto-format JSON, and monitor real-time message streams with timestamps.
+- **📊 API Latency & Performance Benchmarker:** Run batch performance tests against HTTP endpoints to measure average response time, min/max latency, throughput (req/s), and status code distributions.
 - **↺ Quick Restore & History:** Auto-save request history and instantly restore previous request parameters with a single click.
 - **🛡️ SSRF-Hardened Proxy:** Run requests securely through a backend proxy that blocks Server-Side Request Forgery (SSRF) bypasses and bypasses client CORS blocks.
 - **✉️ Postman Collection Import:** Upload your existing Postman Collection v2.1 JSON files to seamlessly import your requests, folder hierarchy, headers, and query parameters directly into a workspace.
