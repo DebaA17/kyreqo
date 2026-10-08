@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+tone_instructions: "Be concise, constructive, and focus on security, performance, and bugs."
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "frontend/src/**"
+      instructions: "Ensure proper React hooks usage, TypeScript type safety, and do not suggest adding code comments."
+    - path: "backend/**"
+      instructions: "Ensure Django security best practices (ORM safety, permission checks)."
+  path_filters:
+    - "!**/*.lock"
+    - "!pnpm-lock.yaml"
+    - "!package-lock.json"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.svg"
+    - "!dist/**"
+    - "!backend/venv/**"
+
+chat:
+  auto_reply: true
