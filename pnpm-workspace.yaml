@@ -36,5 +36,9 @@ overrides:
   undici@>=8.10.0 <8.10.2: ^8.10.2
   postcss-selector-parser@<7.1.6: ^7.1.6
   source-map-js@>=1.0.0 <1.2.2: ^1.2.2
+  '@vitest/mocker@>=2.1.0-beta.7 <4.1.12': ^4.1.12
+  follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
+  undici@>=8.0.0 <8.12.2: ^8.12.2
+  vite@<=6.4.3: ^6.4.4
 patchedDependencies:
   braces@3.0.3: patches/braces@3.0.3.patch
