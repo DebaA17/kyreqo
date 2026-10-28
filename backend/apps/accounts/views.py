@@ -78,7 +78,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email', '')
+        email = str(request.data.get('email') or '').strip()
         ip_address = request.META.get('REMOTE_ADDR')
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
@@ -105,13 +105,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 user_id = token_payload.get('user_id')
                 user = User.objects.filter(id=user_id).first()
             if not user:
-                user = User.objects.filter(email__iexact=email.strip()).first()
+                user = User.objects.filter(email__iexact=email).first()
 
             if user and user.two_factor_enabled and user.two_factor_secret:
                 code = request.data.get('code')
                 if code:
+                    attempts_key = f"2fa-fail:{user.id}"
+                    from django.core.cache import cache
+                    failed_attempts = cache.get(attempts_key, 0)
+                    if failed_attempts >= 5:
+                        return Response(
+                            {"detail": "Too many failed attempts. Please try again later."},
+                            status=status.HTTP_429_TOO_MANY_REQUESTS
+                        )
                     totp = pyotp.TOTP(user.two_factor_secret)
                     if not totp.verify(code, valid_window=1):
+                        cache.set(attempts_key, failed_attempts + 1, timeout=300)
                         LoginAttempt.objects.create(
                             email=user.email,
                             user=user,
@@ -123,6 +132,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                             {"detail": "Invalid two-factor authentication code."},
                             status=status.HTTP_401_UNAUTHORIZED
                         )
+                    cache.delete(attempts_key)
                 else:
                     from django.core import signing
                     temp_token = signing.dumps({"user_id": user.id}, salt="2fa-pre-auth")
@@ -311,8 +321,18 @@ class TwoFactorLoginView(APIView):
             ip_address = x_forwarded_for.split(',')[0].strip()
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
+        attempts_key = f"2fa-fail:{user.id}"
+        from django.core.cache import cache
+        failed_attempts = cache.get(attempts_key, 0)
+        if failed_attempts >= 5:
+            return Response(
+                {'detail': 'Too many failed attempts. Please try again later.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
         totp = pyotp.TOTP(user.two_factor_secret)
         if not totp.verify(code, valid_window=1):
+            cache.set(attempts_key, failed_attempts + 1, timeout=300)
             LoginAttempt.objects.create(
                 email=user.email,
                 user=user,
@@ -324,6 +344,8 @@ class TwoFactorLoginView(APIView):
                 {'detail': 'Invalid two-factor authentication code.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+        cache.delete(attempts_key)
 
         from django.contrib.auth.models import update_last_login
         update_last_login(None, user)

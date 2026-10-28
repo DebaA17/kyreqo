@@ -11,6 +11,8 @@ class AccountsAPITests(APITestCase):
         self.register_url = reverse('accounts:register')
         self.login_url = reverse('accounts:login')
         self.me_url = reverse('accounts:me')
+        from django.core.cache import cache
+        cache.clear()
         self.refresh_url = reverse('accounts:token_refresh')
         
         self.user_data = {
@@ -172,6 +174,8 @@ class TwoFactorAPITests(APITestCase):
         self.login_2fa_url = reverse('accounts:two_factor_login')
         self.login_url = reverse('accounts:login')
         self.me_url = reverse('accounts:me')
+        from django.core.cache import cache
+        cache.clear()
 
     def test_two_factor_setup_authenticated(self):
         self.client.force_authenticate(user=self.user)
@@ -354,6 +358,46 @@ class TwoFactorAPITests(APITestCase):
         self.assertIn('temp_token', login_res.data)
         self.assertNotIn('access', login_res.data)
         self.assertNotIn('refresh', login_res.data)
+
+    def test_login_with_null_email(self):
+        response = self.client.post(
+            self.login_url,
+            {'email': None, 'password': 'RandomPassword123!'},
+            format='json'
+        )
+        self.assertIn(response.status_code, [status.HTTP_400_BAD_REQUEST, status.HTTP_401_UNAUTHORIZED])
+
+    def test_two_factor_login_rate_limiting(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        login_res = self.client.post(
+            self.login_url,
+            {'email': self.user.email, 'password': self.user_password},
+            format='json'
+        )
+        temp_token = login_res.data['temp_token']
+
+        for _ in range(5):
+            res = self.client.post(
+                self.login_2fa_url,
+                {'temp_token': temp_token, 'code': '000000'},
+                format='json'
+            )
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        rate_limit_res = self.client.post(
+            self.login_2fa_url,
+            {'temp_token': temp_token, 'code': '000000'},
+            format='json'
+        )
+        self.assertEqual(rate_limit_res.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
 
 
 
