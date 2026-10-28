@@ -98,14 +98,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         try:
             response = super().post(request, *args, **kwargs)
-            user = User.objects.filter(email=email).first()
+            user = None
+            if isinstance(response.data, dict) and 'access' in response.data:
+                from rest_framework_simplejwt.tokens import AccessToken
+                token_payload = AccessToken(response.data['access'])
+                user_id = token_payload.get('user_id')
+                user = User.objects.filter(id=user_id).first()
+            if not user:
+                user = User.objects.filter(email__iexact=email.strip()).first()
+
             if user and user.two_factor_enabled and user.two_factor_secret:
                 code = request.data.get('code')
                 if code:
                     totp = pyotp.TOTP(user.two_factor_secret)
                     if not totp.verify(code, valid_window=1):
                         LoginAttempt.objects.create(
-                            email=email,
+                            email=user.email,
                             user=user,
                             ip_address=ip_address,
                             user_agent=user_agent,
@@ -129,7 +137,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 update_last_login(None, user)
 
             LoginAttempt.objects.create(
-                email=email,
+                email=user.email if user else email,
                 user=user,
                 ip_address=ip_address,
                 user_agent=user_agent,
@@ -137,9 +145,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
             return response
         except Exception as e:
-            user = User.objects.filter(email=email).first()
+            user = User.objects.filter(email__iexact=email.strip()).first()
             LoginAttempt.objects.create(
-                email=email,
+                email=user.email if user else email,
                 user=user,
                 ip_address=ip_address,
                 user_agent=user_agent,
@@ -184,6 +192,11 @@ class TwoFactorSetupView(APIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
+        if user.two_factor_enabled:
+            return Response(
+                {'detail': 'Two-factor authentication is already enabled. Please disable it before setting up again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         secret = pyotp.random_base32()
         user.two_factor_secret = secret
         user.save(update_fields=['two_factor_secret'])

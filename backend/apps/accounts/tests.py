@@ -322,4 +322,38 @@ class TwoFactorAPITests(APITestCase):
         self.assertIn('two_factor_enabled', response.data)
         self.assertFalse(response.data['two_factor_enabled'])
 
+    def test_two_factor_setup_already_enabled(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+
+        response = self.client.post(self.setup_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('already enabled', response.data.get('detail', ''))
+
+    def test_two_factor_login_whitespace_padded_email(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        padded_email = f"   {self.user.email}   "
+        login_res = self.client.post(
+            self.login_url,
+            {'email': padded_email, 'password': self.user_password},
+            format='json'
+        )
+        self.assertEqual(login_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res.data.get('requires_2fa'))
+        self.assertIn('temp_token', login_res.data)
+        self.assertNotIn('access', login_res.data)
+        self.assertNotIn('refresh', login_res.data)
+
+
 
