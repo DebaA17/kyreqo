@@ -7,8 +7,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'avatar', 'is_staff', 'is_superuser', 'date_joined','has_completed_onboarding')
-        read_only_fields = ('id', 'email', 'date_joined', 'is_staff', 'is_superuser')
+        fields = ('id', 'email', 'first_name', 'last_name', 'avatar', 'is_staff', 'is_superuser', 'date_joined', 'has_completed_onboarding', 'two_factor_enabled')
+        read_only_fields = ('id', 'email', 'date_joined', 'is_staff', 'is_superuser', 'two_factor_enabled')
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -130,4 +130,18 @@ class UserAdminDetailSerializer(serializers.ModelSerializer):
         elif "iPhone" in ua or "iPad" in ua:
             return "iOS"
         return "Other"
+
+
+class TwoFactorVerifySerializer(serializers.Serializer):
+    code = serializers.CharField(required=True, min_length=6, max_length=6)
+
+
+class TwoFactorDisableSerializer(serializers.Serializer):
+    password = serializers.CharField(required=True, write_only=True)
+    code = serializers.CharField(required=True, min_length=6, max_length=6)
+
+
+class TwoFactorLoginSerializer(serializers.Serializer):
+    temp_token = serializers.CharField(required=True)
+    code = serializers.CharField(required=True, min_length=6, max_length=6)
 
