@@ -11,6 +11,8 @@ class AccountsAPITests(APITestCase):
         self.register_url = reverse('accounts:register')
         self.login_url = reverse('accounts:login')
         self.me_url = reverse('accounts:me')
+        from django.core.cache import cache
+        cache.clear()
         self.refresh_url = reverse('accounts:token_refresh')
         
         self.user_data = {
@@ -156,4 +158,246 @@ class AccountsAPITests(APITestCase):
 
         response = self.client.get(admin_logs_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class TwoFactorAPITests(APITestCase):
+
+    def setUp(self):
+        self.user_password = "StrongPassword123!"
+        self.user = User.objects.create_user(
+            email="twofactor@example.com",
+            password=self.user_password
+        )
+        self.setup_url = reverse('accounts:two_factor_setup')
+        self.verify_url = reverse('accounts:two_factor_verify')
+        self.disable_url = reverse('accounts:two_factor_disable')
+        self.login_2fa_url = reverse('accounts:two_factor_login')
+        self.login_url = reverse('accounts:login')
+        self.me_url = reverse('accounts:me')
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_two_factor_setup_authenticated(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.setup_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('secret', response.data)
+        self.assertIn('otpauth_url', response.data)
+        self.assertIn('Kyreqo', response.data['otpauth_url'])
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.two_factor_secret, response.data['secret'])
+        self.assertFalse(self.user.two_factor_enabled)
+
+    def test_two_factor_setup_unauthenticated(self):
+        response = self.client.post(self.setup_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_two_factor_verify_valid_code(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+
+        totp = pyotp.TOTP(secret)
+        code = totp.now()
+
+        response = self.client.post(self.verify_url, {'code': code}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data.get('two_factor_enabled'))
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.two_factor_enabled)
+
+    def test_two_factor_verify_invalid_code(self):
+        self.client.force_authenticate(user=self.user)
+        self.client.post(self.setup_url)
+        response = self.client.post(self.verify_url, {'code': '000000'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_two_factor_disable_success(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+
+        response = self.client.post(
+            self.disable_url,
+            {'password': self.user_password, 'code': totp.now()},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data.get('two_factor_enabled'))
+
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.two_factor_enabled)
+        self.assertEqual(self.user.two_factor_secret, '')
+
+    def test_two_factor_disable_wrong_password(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+
+        response = self.client.post(
+            self.disable_url,
+            {'password': 'WrongPassword!', 'code': totp.now()},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_two_factor_login_two_step_flow(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        login_res = self.client.post(
+            self.login_url,
+            {'email': self.user.email, 'password': self.user_password},
+            format='json'
+        )
+        self.assertEqual(login_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res.data.get('requires_2fa'))
+        self.assertIn('temp_token', login_res.data)
+
+        temp_token = login_res.data['temp_token']
+        verify_login_res = self.client.post(
+            self.login_2fa_url,
+            {'temp_token': temp_token, 'code': totp.now()},
+            format='json'
+        )
+        self.assertEqual(verify_login_res.status_code, status.HTTP_200_OK)
+        self.assertIn('access', verify_login_res.data)
+        self.assertIn('refresh', verify_login_res.data)
+
+    def test_two_factor_login_direct_code(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        login_res = self.client.post(
+            self.login_url,
+            {'email': self.user.email, 'password': self.user_password, 'code': totp.now()},
+            format='json'
+        )
+        self.assertEqual(login_res.status_code, status.HTTP_200_OK)
+        self.assertIn('access', login_res.data)
+        self.assertIn('refresh', login_res.data)
+
+    def test_two_factor_login_invalid_code(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        login_res = self.client.post(
+            self.login_url,
+            {'email': self.user.email, 'password': self.user_password},
+            format='json'
+        )
+        temp_token = login_res.data['temp_token']
+
+        verify_login_res = self.client.post(
+            self.login_2fa_url,
+            {'temp_token': temp_token, 'code': '999999'},
+            format='json'
+        )
+        self.assertEqual(verify_login_res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_two_factor_field_in_me_endpoint(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('two_factor_enabled', response.data)
+        self.assertFalse(response.data['two_factor_enabled'])
+
+    def test_two_factor_setup_already_enabled(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+
+        response = self.client.post(self.setup_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('already enabled', response.data.get('detail', ''))
+
+    def test_two_factor_login_whitespace_padded_email(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        padded_email = f"   {self.user.email}   "
+        login_res = self.client.post(
+            self.login_url,
+            {'email': padded_email, 'password': self.user_password},
+            format='json'
+        )
+        self.assertEqual(login_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res.data.get('requires_2fa'))
+        self.assertIn('temp_token', login_res.data)
+        self.assertNotIn('access', login_res.data)
+        self.assertNotIn('refresh', login_res.data)
+
+    def test_login_with_null_email(self):
+        response = self.client.post(
+            self.login_url,
+            {'email': None, 'password': 'RandomPassword123!'},
+            format='json'
+        )
+        self.assertIn(response.status_code, [status.HTTP_400_BAD_REQUEST, status.HTTP_401_UNAUTHORIZED])
+
+    def test_two_factor_login_rate_limiting(self):
+        import pyotp
+        self.client.force_authenticate(user=self.user)
+        setup_res = self.client.post(self.setup_url)
+        secret = setup_res.data['secret']
+        totp = pyotp.TOTP(secret)
+        self.client.post(self.verify_url, {'code': totp.now()}, format='json')
+        self.client.logout()
+
+        login_res = self.client.post(
+            self.login_url,
+            {'email': self.user.email, 'password': self.user_password},
+            format='json'
+        )
+        temp_token = login_res.data['temp_token']
+
+        for _ in range(5):
+            res = self.client.post(
+                self.login_2fa_url,
+                {'temp_token': temp_token, 'code': '000000'},
+                format='json'
+            )
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        rate_limit_res = self.client.post(
+            self.login_2fa_url,
+            {'temp_token': temp_token, 'code': '000000'},
+            format='json'
+        )
+        self.assertEqual(rate_limit_res.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+
 

@@ -48,6 +48,8 @@ class CustomUser(AbstractUser):
         default=False,
         help_text="Whether the user has completed the onboarding wizard"
     )
+    two_factor_enabled = models.BooleanField(default=False)
+    two_factor_secret = models.CharField(max_length=64, blank=True, default='')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
