@@ -1,8 +1,16 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
+import pyotp
 from django.contrib.auth import get_user_model
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import (
+    RegisterSerializer,
+    UserSerializer,
+    TwoFactorVerifySerializer,
+    TwoFactorDisableSerializer,
+    TwoFactorLoginSerializer
+)
 
 User = get_user_model()
 
@@ -91,6 +99,31 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         try:
             response = super().post(request, *args, **kwargs)
             user = User.objects.filter(email=email).first()
+            if user and user.two_factor_enabled and user.two_factor_secret:
+                code = request.data.get('code')
+                if code:
+                    totp = pyotp.TOTP(user.two_factor_secret)
+                    if not totp.verify(code, valid_window=1):
+                        LoginAttempt.objects.create(
+                            email=email,
+                            user=user,
+                            ip_address=ip_address,
+                            user_agent=user_agent,
+                            is_successful=False
+                        )
+                        return Response(
+                            {"detail": "Invalid two-factor authentication code."},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+                else:
+                    from django.core import signing
+                    temp_token = signing.dumps({"user_id": user.id}, salt="2fa-pre-auth")
+                    return Response({
+                        "requires_2fa": True,
+                        "temp_token": temp_token,
+                        "email": user.email
+                    }, status=status.HTTP_200_OK)
+
             if user:
                 from django.contrib.auth.models import update_last_login
                 update_last_login(None, user)
@@ -143,3 +176,157 @@ def complete_onboarding(request):
         {'message': 'Onboarding completed successfully'},
         status=status.HTTP_200_OK
     )
+
+
+class TwoFactorSetupView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        secret = pyotp.random_base32()
+        user.two_factor_secret = secret
+        user.save(update_fields=['two_factor_secret'])
+        totp = pyotp.TOTP(secret)
+        otpauth_url = totp.provisioning_uri(name=user.email, issuer_name='Kyreqo')
+        return Response({
+            'secret': secret,
+            'otpauth_url': otpauth_url
+        }, status=status.HTTP_200_OK)
+
+
+class TwoFactorVerifyView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = TwoFactorVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data['code']
+
+        if not user.two_factor_secret:
+            return Response(
+                {'detail': 'Two-factor setup has not been initiated.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        totp = pyotp.TOTP(user.two_factor_secret)
+        if not totp.verify(code, valid_window=1):
+            return Response(
+                {'detail': 'Invalid two-factor authentication code.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.two_factor_enabled = True
+        user.save(update_fields=['two_factor_enabled'])
+        return Response({
+            'detail': 'Two-factor authentication successfully enabled.',
+            'two_factor_enabled': True
+        }, status=status.HTTP_200_OK)
+
+
+class TwoFactorDisableView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = TwoFactorDisableSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        password = serializer.validated_data['password']
+        code = serializer.validated_data['code']
+
+        if not user.check_password(password):
+            return Response(
+                {'detail': 'Invalid password.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.two_factor_enabled or not user.two_factor_secret:
+            return Response(
+                {'detail': 'Two-factor authentication is not enabled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        totp = pyotp.TOTP(user.two_factor_secret)
+        if not totp.verify(code, valid_window=1):
+            return Response(
+                {'detail': 'Invalid two-factor authentication code.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.two_factor_enabled = False
+        user.two_factor_secret = str()
+        user.save(update_fields=['two_factor_enabled', 'two_factor_secret'])
+        return Response({
+            'detail': 'Two-factor authentication disabled successfully.',
+            'two_factor_enabled': False
+        }, status=status.HTTP_200_OK)
+
+
+class TwoFactorLoginView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        serializer = TwoFactorLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        temp_token = serializer.validated_data['temp_token']
+        code = serializer.validated_data['code']
+
+        from django.core import signing
+        try:
+            payload = signing.loads(temp_token, salt="2fa-pre-auth", max_age=300)
+            user_id = payload.get('user_id')
+            user = User.objects.get(id=user_id)
+        except (signing.BadSignature, signing.SignatureExpired, User.DoesNotExist):
+            return Response(
+                {'detail': 'Verification session has expired or is invalid. Please log in again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.two_factor_enabled or not user.two_factor_secret:
+            return Response(
+                {'detail': 'Two-factor authentication is not configured for this user.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ip_address = request.META.get('REMOTE_ADDR')
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0].strip()
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+        totp = pyotp.TOTP(user.two_factor_secret)
+        if not totp.verify(code, valid_window=1):
+            LoginAttempt.objects.create(
+                email=user.email,
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                is_successful=False
+            )
+            return Response(
+                {'detail': 'Invalid two-factor authentication code.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        from django.contrib.auth.models import update_last_login
+        update_last_login(None, user)
+
+        LoginAttempt.objects.create(
+            email=user.email,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            is_successful=True
+        )
+
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
