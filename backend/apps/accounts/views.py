@@ -78,6 +78,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
+        """Authenticate credentials and return JWTs or a two-factor challenge.
+
+        When two-factor authentication is enabled and a secret is stored,
+        request data may include a TOTP ``code`` from the current or either
+        adjacent time step. A missing or empty code returns HTTP 200 with
+        ``requires_2fa``, ``temp_token``, and ``email``; the token is accepted
+        by TwoFactorLoginView for 300 seconds. Invalid codes return HTTP 401.
+
+        Successful token responses update the resolved user's last login.
+        A failed Turnstile check outside DEBUG mode returns HTTP 400.
+        Credential validation, authentication, and token processing errors
+        propagate to the caller.
+        """
         email = request.data.get('email', '')
         ip_address = request.META.get('REMOTE_ADDR')
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -191,6 +204,13 @@ class TwoFactorSetupView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
+        """Store a pending TOTP secret for the authenticated user.
+
+        Replace any pending secret without enabling 2FA and return HTTP 200
+        with ``secret`` and an ``otpauth_url`` provisioning URI labeled with
+        the user's email and the Kyreqo issuer. Return HTTP 400 if two-factor
+        authentication is already enabled, leaving the stored secret unchanged.
+        """
         user = request.user
         if user.two_factor_enabled:
             return Response(
@@ -213,6 +233,14 @@ class TwoFactorVerifyView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
+        """Enable 2FA using the authenticated user's TOTP code.
+
+        Accept a six-character ``code`` in the request data for the current or
+        either adjacent TOTP time step. Persist the enabled state and return
+        HTTP 200 with ``detail`` and ``two_factor_enabled`` set to True.
+        Return HTTP 400 if no secret is stored or the code does not match.
+        Invalid request fields raise DRF ValidationError.
+        """
         user = request.user
         serializer = TwoFactorVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -244,6 +272,15 @@ class TwoFactorDisableView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
+        """Disable 2FA using the authenticated user's password and code.
+
+        Require ``password`` and a six-character ``code`` in the request data;
+        accept the current or either adjacent TOTP time step. Clear the stored
+        secret and return HTTP 200 with ``detail`` and ``two_factor_enabled``
+        set to False. Return HTTP 400 for a wrong password, missing 2FA
+        configuration, or an incorrect code. Invalid request fields raise DRF
+        ValidationError.
+        """
         user = request.user
         serializer = TwoFactorDisableSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -283,6 +320,18 @@ class TwoFactorLoginView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
+        """Complete a two-factor login using a temporary token and TOTP code.
+
+        Request data must contain the ``temp_token`` issued by the credential
+        login and a six-character ``code`` for the current or either adjacent
+        TOTP time step. Tokens older than 300 seconds, invalid signatures,
+        missing users, or missing 2FA configuration return HTTP 400. An
+        incorrect code returns HTTP 401. Invalid request fields raise DRF
+        ValidationError.
+
+        On success, update the user's last login and return HTTP 200 with
+        ``refresh`` and ``access`` JWTs.
+        """
         serializer = TwoFactorLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         temp_token = serializer.validated_data['temp_token']
