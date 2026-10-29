@@ -8,6 +8,7 @@ export interface User {
   is_staff?: boolean;
   is_superuser?: boolean;
   has_completed_onboarding?: boolean;
+  two_factor_enabled?: boolean;
 }
 
 export interface AuthState {
@@ -17,4 +18,6 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  requires2FA: boolean;
+  tempToken: string | null;
 }

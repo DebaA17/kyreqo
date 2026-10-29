@@ -18,6 +18,7 @@
     "axios": "^1.6.8",
     "clsx": "^2.1.1",
     "lucide-react": "^0.378.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.1",

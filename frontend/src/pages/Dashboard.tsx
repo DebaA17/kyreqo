@@ -41,6 +41,7 @@ import HistorySidebar from '../components/HistorySidebar';
 import { RequestHistory } from '../types/history';
 import useHistoryStore from '../store/historyStore';
 import { useEffect, useCallback } from 'react';
+import TwoFactorSettings from '../components/TwoFactorSettings';
 
 interface RequestHeader {
   key: string;
@@ -233,7 +234,7 @@ export default function Dashboard() {
   const [envAutocompleteField, setEnvAutocompleteField] = useState<'url' | 'body' | null>(null);
   const [envTriggerIndex, setEnvTriggerIndex] = useState(-1);
   const { collections, fetchCollections } = useCollectionStore();
-  const { user, logout, updateProfile, isLoading, error, clearError } = useAuthStore();
+  const { user, logout, updateProfile, isLoading, loadProfile, error, clearError } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
     'GET'
   );
@@ -1132,6 +1133,13 @@ export default function Dashboard() {
                                 />
                               </div>
                             </div>
+                          </div>
+
+                          <div className="pt-4 border-t border-zinc-800 mt-2">
+                            <TwoFactorSettings
+                              isEnabled={!!user?.two_factor_enabled}
+                              onStatusChange={loadProfile}
+                            />
                           </div>
 
                           <div className="flex justify-end gap-2 mt-6">
