@@ -9,6 +9,7 @@ import useOnboardingStore from './onboardingStore';
 
 interface AuthActions {
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
+  verify2FA: (code: string) => Promise<void>;
   register: (data: Record<string, string>) => Promise<void>;
   logout: () => void;
   loadProfile: () => Promise<void>;
@@ -26,6 +27,8 @@ const getInitialState = (): AuthState => {
     isAuthenticated: !!accessToken,
     isLoading: false,
     error: null,
+    requires2FA: false,
+    tempToken: null,
   };
 };
 
@@ -41,6 +44,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         isAuthenticated: false,
         isLoading: false,
         error: 'Session expired. Please log in again.',
+        requires2FA: false,
+        tempToken: null,
       });
     });
   }
@@ -53,24 +58,43 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
     login: async (email, password, turnstileToken) => {
       set({ isLoading: true, error: null });
       try {
-        const tokens = await apiClient<{ access: string; refresh: string }>(
-          '/api/accounts/login/',
-          {
-            method: 'POST',
-            body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
-            skipAuth: true,
-          }
-        );
+        // Define the possible response shapes from the backend
+        type LoginResponse = {
+          access?: string;
+          refresh?: string;
+          requires_2fa?: boolean;
+          temp_token?: string;
+        };
 
-        localStorage.setItem('accessToken', tokens.access);
-        localStorage.setItem('refreshToken', tokens.refresh);
-
-        set({
-          accessToken: tokens.access,
-          refreshToken: tokens.refresh,
+        const response = await apiClient<LoginResponse>('/api/accounts/login/', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
+          skipAuth: true,
         });
+        if (response.requires_2fa) {
+          set({
+            requires2FA: true,
+            tempToken: response.temp_token || null,
+            isLoading: false,
+          });
+          return;
+        }
 
-        await get().loadProfile();
+        if (response.access && response.refresh) {
+          localStorage.setItem('accessToken', response.access);
+          localStorage.setItem('refreshToken', response.refresh);
+
+          set({
+            accessToken: response.access,
+            refreshToken: response.refresh,
+            requires2FA: false,
+            tempToken: null,
+          });
+
+          await get().loadProfile();
+        } else {
+          throw new Error('Invalid response from server.');
+        }
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
@@ -78,6 +102,38 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
           error: message,
           isLoading: false,
         });
+        throw err;
+      }
+    },
+    verify2FA: async code => {
+      set({ isLoading: true, error: null });
+      try {
+        const { tempToken } = get();
+
+        const response = await apiClient<{ access: string; refresh: string }>(
+          '/api/accounts/2fa/login/',
+          {
+            method: 'POST',
+            body: JSON.stringify({ code, temp_token: tempToken }),
+            skipAuth: true,
+          }
+        );
+
+        localStorage.setItem('accessToken', response.access);
+        localStorage.setItem('refreshToken', response.refresh);
+
+        set({
+          accessToken: response.access,
+          refreshToken: response.refresh,
+          requires2FA: false,
+          tempToken: null,
+          isLoading: false,
+        });
+
+        await get().loadProfile();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Invalid 2FA code.';
+        set({ error: message, isLoading: false });
         throw err;
       }
     },
@@ -127,6 +183,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         refreshToken: null,
         isAuthenticated: false,
         error: null,
+        requires2FA: false,
+        tempToken: null,
       });
     },
 

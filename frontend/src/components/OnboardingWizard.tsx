@@ -8,6 +8,7 @@ import {
   Send,
   Folder,
   Database,
+  ShieldCheck,
 } from 'lucide-react';
 import useOnboardingStore from '../store/onboardingStore';
 
@@ -97,6 +98,30 @@ const OnboardingWizard: React.FC = () => {
           </div>
           <p className="text-zinc-500 text-xs mt-2">
             Click the 🌐 dropdown in the header to manage environments.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: 'Enhance Your Security 🛡️',
+      icon: <ShieldCheck className="h-10 w-10 text-emerald-400" />,
+      content: (
+        <div className="text-center">
+          <p className="text-zinc-300 text-sm mb-2">
+            Keep your API keys, environments, and workspace credentials safe.
+          </p>
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-3 text-left text-xs text-zinc-300 space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-medium">
+              <ShieldCheck className="h-4 w-4" />
+              <span>Two-Factor Authentication (2FA)</span>
+            </div>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">
+              You can optionally enable TOTP 2FA anytime using Google Authenticator, Microsoft
+              Authenticator, or 1Password via your <strong>Edit Profile</strong> settings.
+            </p>
+          </div>
+          <p className="text-zinc-500 text-xs mt-2">
+            Optional, but recommended for better account security.
           </p>
         </div>
       ),

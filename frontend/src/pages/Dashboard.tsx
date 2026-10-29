@@ -41,6 +41,7 @@ import HistorySidebar from '../components/HistorySidebar';
 import { RequestHistory } from '../types/history';
 import useHistoryStore from '../store/historyStore';
 import { useEffect, useCallback } from 'react';
+import TwoFactorSettings from '../components/TwoFactorSettings';
 
 interface RequestHeader {
   key: string;
@@ -233,7 +234,7 @@ export default function Dashboard() {
   const [envAutocompleteField, setEnvAutocompleteField] = useState<'url' | 'body' | null>(null);
   const [envTriggerIndex, setEnvTriggerIndex] = useState(-1);
   const { collections, fetchCollections } = useCollectionStore();
-  const { user, logout, updateProfile, isLoading, error, clearError } = useAuthStore();
+  const { user, logout, updateProfile, isLoading, loadProfile, error, clearError } = useAuthStore();
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'QUERY'>(
     'GET'
   );
@@ -1053,11 +1054,8 @@ export default function Dashboard() {
                       </div>
                     )}
                     {showProfileUpdateModal && (
-                      <form
-                        onSubmit={handleProfileUpdateChanges}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                      >
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
+                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
                           <h3 className="text-lg font-medium text-white mb-4">Edit Profile</h3>
 
                           {error && (
@@ -1066,7 +1064,7 @@ export default function Dashboard() {
                             </div>
                           )}
 
-                          <div className="space-y-4">
+                          <form onSubmit={handleProfileUpdateChanges} className="space-y-4">
                             <div>
                               <label className="block text-xs text-zinc-400 mb-1">First Name</label>
                               <input
@@ -1132,29 +1130,36 @@ export default function Dashboard() {
                                 />
                               </div>
                             </div>
-                          </div>
 
-                          <div className="flex justify-end gap-2 mt-6">
-                            <button
-                              className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
-                              type="button"
-                              onClick={() => {
-                                setShowProfileUpdateModal(false);
-                                clearError();
-                              }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition disabled:opacity-50"
-                              type="submit"
-                              disabled={isLoading}
-                            >
-                              {isLoading ? 'Saving...' : 'Save Changes'}
-                            </button>
+                            <div className="flex justify-end gap-2 pt-2">
+                              <button
+                                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
+                                type="button"
+                                onClick={() => {
+                                  setShowProfileUpdateModal(false);
+                                  clearError();
+                                }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition disabled:opacity-50"
+                                type="submit"
+                                disabled={isLoading}
+                              >
+                                {isLoading ? 'Saving...' : 'Save Changes'}
+                              </button>
+                            </div>
+                          </form>
+
+                          <div className="pt-4 border-t border-zinc-800 mt-4">
+                            <TwoFactorSettings
+                              isEnabled={!!user?.two_factor_enabled}
+                              onStatusChange={loadProfile}
+                            />
                           </div>
                         </div>
-                      </form>
+                      </div>
                     )}
                   </div>
                 </div>

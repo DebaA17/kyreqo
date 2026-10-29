@@ -22,7 +22,7 @@ interface OnboardingState {
 const useOnboardingStore = create<OnboardingState>((set, get) => ({
   isOpen: false,
   currentStep: 0,
-  totalSteps: 5,
+  totalSteps: 6,
   isCompleting: false,
   hasCompletedOnboarding: localStorage.getItem('onboarding_completed') === 'true',
 
