@@ -116,10 +116,13 @@ const OnboardingWizard: React.FC = () => {
               <span>Two-Factor Authentication (2FA)</span>
             </div>
             <p className="text-zinc-400 text-[11px] leading-relaxed">
-              You can optionally enable TOTP 2FA anytime using Google Authenticator, Microsoft Authenticator, or 1Password via your <strong>Edit Profile</strong> settings.
+              You can optionally enable TOTP 2FA anytime using Google Authenticator, Microsoft
+              Authenticator, or 1Password via your <strong>Edit Profile</strong> settings.
             </p>
           </div>
-          <p className="text-zinc-500 text-xs mt-2">Optional, but recommended for better account security.</p>
+          <p className="text-zinc-500 text-xs mt-2">
+            Optional, but recommended for better account security.
+          </p>
         </div>
       ),
     },
