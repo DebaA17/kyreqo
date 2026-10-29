@@ -19,7 +19,11 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<'idle' | 'setup' | 'disable'>('idle');
 
-  const handleStartSetup = async () => {
+  const handleStartSetup = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -40,6 +44,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
 
   const handleVerifySetup = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (verificationCode.length !== 6) return;
 
     setIsLoading(true);
@@ -52,7 +57,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
       setMode('idle');
       setSetupData(null);
       setVerificationCode('');
-      onStatusChange();
+      await onStatusChange();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid code.');
     } finally {
@@ -62,6 +67,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
 
   const handleDisable = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsLoading(true);
     setError(null);
     try {
@@ -72,7 +78,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
       setMode('idle');
       setPassword('');
       setDisableCode('');
-      onStatusChange();
+      await onStatusChange();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disable 2FA.');
     } finally {
@@ -224,6 +230,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
 
       {isEnabled ? (
         <button
+          type="button"
           onClick={() => setMode('disable')}
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded transition"
         >
@@ -231,6 +238,7 @@ export default function TwoFactorSettings({ isEnabled, onStatusChange }: TwoFact
         </button>
       ) : (
         <button
+          type="button"
           onClick={handleStartSetup}
           disabled={isLoading}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded transition disabled:opacity-50"
