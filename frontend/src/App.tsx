@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NotFound from './pages/NotFound';
 import { useAuthStore } from './store/authStore';
+import SeasonalSnowfall from './components/SeasonalSnowfall';
 
 export default function App() {
   const { loadProfile, accessToken } = useAuthStore();
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <SeasonalSnowfall />
     </Router>
   );
 }
