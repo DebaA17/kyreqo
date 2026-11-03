@@ -10,14 +10,16 @@
     "lint": "pnpm --filter kyreqo-frontend lint",
     "format": "pnpm --filter kyreqo-frontend format",
     "format:check": "pnpm --filter kyreqo-frontend format:check",
+    "backend:setup": "if [ ! -x backend/venv/bin/python ]; then python3 -m venv backend/venv; fi && backend/venv/bin/python -m pip install -r backend/requirements.txt && backend/venv/bin/python backend/manage.py migrate",
     "backend": "backend/venv/bin/python backend/manage.py runserver",
     "backend:migrate": "backend/venv/bin/python backend/manage.py migrate",
     "backend:check": "backend/venv/bin/python backend/manage.py check",
     "backend:test": "backend/venv/bin/python backend/manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history",
+    "backend:setup:win": "if not exist backend\\venv\\Scripts\\python.exe (python -m venv backend\\venv) && backend\\venv\\Scripts\\python -m pip install -r backend\\requirements.txt && backend\\venv\\Scripts\\python backend\\manage.py migrate",
     "backend:win": "backend\\venv\\Scripts\\python backend/manage.py runserver",
     "backend:migrate:win": "backend\\venv\\Scripts\\python backend/manage.py migrate",
     "backend:check:win": "backend\\venv\\Scripts\\python backend/manage.py check",
     "backend:test:win": "backend\\venv\\Scripts\\python backend/manage.py test apps.accounts apps.workspaces apps.collections apps.api_requests apps.environments apps.history"
   },
-  "packageManager": "pnpm@12.15.0+sha512.b3951d6d6ff4a9f13dc7cf56cd28d2b8eb37dbcc9c68e52e1e1191873ea9f82a017287ab50baadc5ccc494f036c67c0e47eb13608c2fa36f47711b61ea128e61"
+  "packageManager": "pnpm@12.16.1+sha512.091d1dee7927575661b25dab3c2ae31cafc1c54d6b71ed6a6600cf0c1cb10434a447eae14015f1b23e2e6bedeed79df94a932e2164d2832280dce3fb32f656d1"
 }

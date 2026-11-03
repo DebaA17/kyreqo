@@ -18,22 +18,17 @@ All development scripts should be run from the repository root using the workspa
 
 ### Backend Local Setup
 
-1. **Create the Python virtual environment**:
+1. **Create the virtual environment, install dependencies, and run migrations**:
    ```bash
-   python3 -m venv backend/venv
+   pnpm backend:setup
    ```
-2. **Install dependencies**:
-   ```bash
-   backend/venv/bin/pip install -r backend/requirements.txt
-   ```
-3. **Run database migrations**:
-   ```bash
-   pnpm backend:migrate
-   ```
-4. **Start the Django development server**:
+   This command can be run from the repository root and is safe to rerun.
+   On Windows, use `pnpm backend:setup:win`.
+2. **Start the Django development server**:
    ```bash
    pnpm backend
    ```
+   On Windows, use `pnpm backend:win`.
 
 > [!TIP]
 > Once the backend is running, interactive Swagger/ReDoc API documentation is available locally at [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/). The production version is available at [https://kyreqo.vercel.app/api/docs/](https://kyreqo.vercel.app/api/docs/). Use these to explore and test endpoints while developing.
