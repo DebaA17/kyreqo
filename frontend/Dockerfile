@@ -29,7 +29,7 @@ RUN pnpm --filter kyreqo-frontend build
 # ============================================
 FROM nginx:alpine AS production
 
-RUN apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache && apk add --no-cache "expat>=2.10.0-r0"
 
 # Copy the built files from builder stage
 COPY --from=builder /app/frontend/dist /usr/share/nginx/html

@@ -12,8 +12,16 @@ export default function Login() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
-  const { login, verify2FA, isLoading, error, isAuthenticated, requires2FA, clearError } =
-    useAuthStore();
+  const {
+    login,
+    verify2FA,
+    cancel2FA,
+    isLoading,
+    error,
+    isAuthenticated,
+    requires2FA,
+    clearError,
+  } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -141,6 +149,19 @@ export default function Login() {
               ) : (
                 'Verify & Sign In'
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                cancel2FA();
+                setTwoFactorCode('');
+                setValidationError(null);
+                clearError();
+              }}
+              disabled={isLoading}
+              className="w-full mt-2 py-2 bg-transparent hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+            >
+              ← Back to Login
             </button>
           </form>
         ) : (
