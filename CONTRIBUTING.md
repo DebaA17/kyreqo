@@ -28,6 +28,7 @@ All development scripts should be run from the repository root using the workspa
    ```bash
    pnpm backend
    ```
+   On Windows, use `pnpm backend:win`.
 
 > [!TIP]
 > Once the backend is running, interactive Swagger/ReDoc API documentation is available locally at [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/). The production version is available at [https://kyreqo.vercel.app/api/docs/](https://kyreqo.vercel.app/api/docs/). Use these to explore and test endpoints while developing.
