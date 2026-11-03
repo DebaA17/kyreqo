@@ -8,6 +8,7 @@ import useHistoryStore from './historyStore';
 import useOnboardingStore from './onboardingStore';
 
 interface AuthActions {
+  cancel2FA: () => void;
   login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
   verify2FA: (code: string) => Promise<void>;
   register: (data: Record<string, string>) => Promise<void>;
@@ -137,7 +138,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         throw err;
       }
     },
-
+    cancel2FA: () => {
+      set({
+        requires2FA: false,
+        tempToken: null,
+        error: null,
+      });
+    },
     register: async data => {
       set({ isLoading: true, error: null });
       try {
