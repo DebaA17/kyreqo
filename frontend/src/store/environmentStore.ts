@@ -15,6 +15,7 @@ export interface EnvironmentVariable {
   key: string;
   value: string;
   enabled: boolean;
+  is_secret?: boolean;
 }
 
 interface EnvironmentStore {
