@@ -52,14 +52,24 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
       setVariables([]);
       setEnvName('');
     }
+
+    setVisibleRows({});
+    setCopiedIndex(null);
   }, [selectedEnvId, environments]);
 
   const handleAddVariable = () => {
-    setVariables([...variables, { key: '', value: '', enabled: true }]);
+    setVariables([...variables, { key: '', value: '', enabled: true, is_secret: true }]);
   };
 
   const handleRemoveVariable = (index: number) => {
     setVariables(variables.filter((_, i) => i !== index));
+
+    setVisibleRows(prev => {
+      const newRows = { ...prev };
+      delete newRows[index];
+      return newRows;
+    });
+    setCopiedIndex(null);
   };
   const toggleVisibility = (index: number) => {
     setVisibleRows(prev => ({ ...prev, [index]: !prev[index] }));
@@ -76,9 +86,13 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
   };
 
   const copyToClipboard = (index: number, value: string) => {
-    navigator.clipboard.writeText(value);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+    navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+      })
+      .catch(() => {});
   };
   const handleVariableChange = (
     index: number,
@@ -108,7 +122,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
     const created = await createEnvironment({
       name: newEnvName.trim(),
       workspace: workspaceId,
-      variables: [{ key: '', value: '', enabled: true }],
+      variables: [{ key: '', value: '', enabled: true, is_secret: true }],
     });
 
     if (created) {
