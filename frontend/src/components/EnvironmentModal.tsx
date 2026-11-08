@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Check, AlertCircle } from 'lucide-react';
+import { X, Plus, Trash2, Check, AlertCircle, Eye, EyeOff, Copy, Lock } from 'lucide-react';
 import useEnvironmentStore, { EnvironmentVariable } from '../store/environmentStore';
 
 interface EnvironmentModalProps {
@@ -28,6 +28,8 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newEnvName, setNewEnvName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [visibleRows, setVisibleRows] = useState<Record<number, boolean>>({});
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && workspaceId) {
@@ -50,16 +52,48 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
       setVariables([]);
       setEnvName('');
     }
+
+    setVisibleRows({});
+    setCopiedIndex(null);
   }, [selectedEnvId, environments]);
 
   const handleAddVariable = () => {
-    setVariables([...variables, { key: '', value: '', enabled: true }]);
+    setVariables([...variables, { key: '', value: '', enabled: true, is_secret: true }]);
   };
 
   const handleRemoveVariable = (index: number) => {
     setVariables(variables.filter((_, i) => i !== index));
+
+    setVisibleRows(prev => {
+      const newRows = { ...prev };
+      delete newRows[index];
+      return newRows;
+    });
+    setCopiedIndex(null);
+  };
+  const toggleVisibility = (index: number) => {
+    setVisibleRows(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
+  const handleVariableSecretToggle = (index: number, isSecret: boolean) => {
+    const updated = [...variables];
+    updated[index] = { ...updated[index], is_secret: isSecret };
+    setVariables(updated);
+    // If it becomes secret, make sure it's masked by default
+    if (isSecret) {
+      setVisibleRows(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const copyToClipboard = (index: number, value: string) => {
+    navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+      })
+      .catch(() => {});
+  };
   const handleVariableChange = (
     index: number,
     field: keyof EnvironmentVariable,
@@ -88,7 +122,7 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
     const created = await createEnvironment({
       name: newEnvName.trim(),
       workspace: workspaceId,
-      variables: [{ key: '', value: '', enabled: true }],
+      variables: [{ key: '', value: '', enabled: true, is_secret: true }],
     });
 
     if (created) {
@@ -263,8 +297,11 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
                     <thead>
                       <tr className="text-left text-xs text-gray-400 border-b border-gray-700">
                         <th className="pb-2 w-12">#</th>
-                        <th className="pb-2 w-1/3">Key</th>
+                        <th className="pb-2 w-1/4">Key</th>
                         <th className="pb-2 w-1/3">Value</th>
+                        <th className="pb-2 w-16 text-center" title="Secret / Sensitive">
+                          Secret
+                        </th>
                         <th className="pb-2 w-16 text-center">Enabled</th>
                         <th className="pb-2 w-12"></th>
                       </tr>
@@ -272,52 +309,101 @@ const EnvironmentModal: React.FC<EnvironmentModalProps> = ({ isOpen, onClose, wo
                     <tbody>
                       {variables.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-4 text-center text-gray-500 text-sm">
+                          <td colSpan={6} className="py-4 text-center text-gray-500 text-sm">
                             No variables yet. Click "Add Variable" to create one.
                           </td>
                         </tr>
                       ) : (
-                        variables.map((variable, index) => (
-                          <tr key={index} className="border-b border-gray-800/50">
-                            <td className="py-1.5 text-xs text-gray-500">{index + 1}</td>
-                            <td className="py-1.5 pr-2">
-                              <input
-                                type="text"
-                                value={variable.key}
-                                onChange={e => handleVariableChange(index, 'key', e.target.value)}
-                                placeholder="KEY_NAME"
-                                className="w-full px-2 py-1 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:outline-none focus:border-indigo-500"
-                              />
-                            </td>
-                            <td className="py-1.5 pr-2">
-                              <input
-                                type="text"
-                                value={variable.value}
-                                onChange={e => handleVariableChange(index, 'value', e.target.value)}
-                                placeholder="value"
-                                className="w-full px-2 py-1 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:outline-none focus:border-indigo-500"
-                              />
-                            </td>
-                            <td className="py-1.5 text-center">
-                              <input
-                                type="checkbox"
-                                checked={variable.enabled}
-                                onChange={e =>
-                                  handleVariableChange(index, 'enabled', e.target.checked)
-                                }
-                                className="rounded border-gray-600 bg-gray-800 text-indigo-500 focus:ring-indigo-500"
-                              />
-                            </td>
-                            <td className="py-1.5 text-center">
-                              <button
-                                onClick={() => handleRemoveVariable(index)}
-                                className="p-1 hover:bg-red-900/30 rounded transition"
-                              >
-                                <Trash2 className="h-3.5 w-3.5 text-red-400/60 hover:text-red-400" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
+                        variables.map((variable, index) => {
+                          const isSecret = variable.is_secret || false;
+                          const isVisible = visibleRows[index] || false;
+
+                          return (
+                            <tr key={index} className="border-b border-gray-800/50">
+                              <td className="py-1.5 text-xs text-gray-500">{index + 1}</td>
+                              <td className="py-1.5 pr-2">
+                                <input
+                                  type="text"
+                                  value={variable.key}
+                                  onChange={e => handleVariableChange(index, 'key', e.target.value)}
+                                  placeholder="KEY_NAME"
+                                  className="w-full px-2 py-1 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:outline-none focus:border-indigo-500"
+                                />
+                              </td>
+                              <td className="py-1.5 pr-2">
+                                <div className="relative flex items-center">
+                                  <input
+                                    type={isSecret && !isVisible ? 'password' : 'text'}
+                                    value={variable.value}
+                                    onChange={e =>
+                                      handleVariableChange(index, 'value', e.target.value)
+                                    }
+                                    placeholder="value"
+                                    className="w-full pl-2 pr-16 py-1 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:outline-none focus:border-indigo-500"
+                                  />
+                                  {/* Show/Hide and Copy Buttons inside the input */}
+                                  <div className="absolute right-1 flex items-center gap-1">
+                                    {isSecret && (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleVisibility(index)}
+                                        className="p-1 text-gray-400 hover:text-white transition"
+                                        title={isVisible ? 'Hide value' : 'Show value'}
+                                      >
+                                        {isVisible ? (
+                                          <EyeOff className="h-3.5 w-3.5" />
+                                        ) : (
+                                          <Eye className="h-3.5 w-3.5" />
+                                        )}
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => copyToClipboard(index, variable.value)}
+                                      className="p-1 text-gray-400 hover:text-white transition"
+                                      title="Copy value"
+                                    >
+                                      {copiedIndex === index ? (
+                                        <Check className="h-3.5 w-3.5 text-green-400" />
+                                      ) : (
+                                        <Copy className="h-3.5 w-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-1.5 text-center">
+                                {/* Secret Lock Toggle */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleVariableSecretToggle(index, !isSecret)}
+                                  className={`p-1 rounded transition ${isSecret ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-300'}`}
+                                  title={isSecret ? 'Marked as secret' : 'Mark as secret'}
+                                >
+                                  <Lock className="h-4 w-4" />
+                                </button>
+                              </td>
+                              <td className="py-1.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={variable.enabled}
+                                  onChange={e =>
+                                    handleVariableChange(index, 'enabled', e.target.checked)
+                                  }
+                                  className="rounded border-gray-600 bg-gray-800 text-indigo-500 focus:ring-indigo-500"
+                                />
+                              </td>
+                              <td className="py-1.5 text-center">
+                                <button
+                                  onClick={() => handleRemoveVariable(index)}
+                                  className="p-1 hover:bg-red-900/30 rounded transition"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-red-400/60 hover:text-red-400" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
