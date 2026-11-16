@@ -18,6 +18,7 @@ import {
   Radio,
   Globe,
   Zap,
+  HelpCircle,
 } from 'lucide-react';
 import GraphQLPanel from '../components/GraphQLPanel';
 import WebSocketPanel from '../components/WebSocketPanel';
@@ -42,6 +43,7 @@ import { RequestHistory } from '../types/history';
 import useHistoryStore from '../store/historyStore';
 import { useEffect, useCallback } from 'react';
 import TwoFactorSettings from '../components/TwoFactorSettings';
+import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
 
 interface RequestHeader {
   key: string;
@@ -258,6 +260,7 @@ export default function Dashboard() {
     null
   );
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
@@ -872,18 +875,26 @@ export default function Dashboard() {
         }
       }
 
-      if (event.key === 'h' || event.key === 'H') {
-        const activeEl = document.activeElement;
-        const isInputFocused =
-          activeEl &&
-          (activeEl.tagName === 'INPUT' ||
-            activeEl.tagName === 'TEXTAREA' ||
-            activeEl.getAttribute('contenteditable') === 'true');
+      const activeEl = document.activeElement;
+      const isInputFocused =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.getAttribute('contenteditable') === 'true');
 
-        if (!isInputFocused) {
-          event.preventDefault();
-          setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
-        }
+      if (event.key === '?' && !isInputFocused) {
+        event.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+
+      if (event.key === 'Escape' && showKeyboardShortcuts) {
+        event.preventDefault();
+        setShowKeyboardShortcuts(false);
+      }
+
+      if ((event.key === 'h' || event.key === 'H') && !isInputFocused) {
+        event.preventDefault();
+        setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
       }
     };
 
@@ -891,7 +902,7 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [loading, handleSend, requestType]);
+  }, [loading, handleSend, requestType, showKeyboardShortcuts]);
 
   // Check if onboarding should show on first login
   useEffect(() => {
@@ -935,6 +946,17 @@ export default function Dashboard() {
             <Shield className="h-4 w-4 text-emerald-500" />
             <span>SSRF Protection Engaged</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowKeyboardShortcuts(true)}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Shortcuts</span>
+            <kbd className="text-[9px] text-zinc-500">?</kbd>
+          </button>
         </div>
       </header>
 
@@ -2103,6 +2125,10 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <KeyboardShortcutsModal
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
       {showSaveRequestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
