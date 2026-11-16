@@ -1,0 +1,24 @@
+{
+  "name": "Kyreqo | Premium API Testing & Debugging Platform",
+  "short_name": "Kyreqo",
+  "description": "A modern, open-source web-based API testing client designed for fast, safe, and collaborative API request design.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0c10",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
