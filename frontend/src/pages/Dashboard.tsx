@@ -44,6 +44,8 @@ import useHistoryStore from '../store/historyStore';
 import { useEffect, useCallback } from 'react';
 import TwoFactorSettings from '../components/TwoFactorSettings';
 import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
+import ImportCurlModal from '../components/ImportCurlModal';
+import { ParsedCurl } from '../utils/curlParser';
 
 interface RequestHeader {
   key: string;
@@ -261,6 +263,7 @@ export default function Dashboard() {
   );
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showImportCurlModal, setShowImportCurlModal] = useState(false);
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
@@ -685,6 +688,19 @@ export default function Dashboard() {
     setQueryParams(parseUrlToParams(lastRequest.url));
     setHeaders(lastRequest.headers);
     setBody(lastRequest.body);
+    setShowUrlSuggestions(false);
+    setActiveSuggestionIndex(-1);
+  };
+
+  const handleImportCurl = (parsed: ParsedCurl) => {
+    setMethod(parsed.method);
+    setUrl(parsed.url);
+    setQueryParams(parseUrlToParams(parsed.url));
+    setHeaders(parsed.headers);
+    if (parsed.body) {
+      setBody(parsed.body);
+      setActiveTab('body');
+    }
     setShowUrlSuggestions(false);
     setActiveSuggestionIndex(-1);
   };
@@ -1493,6 +1509,15 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setShowImportCurlModal(true)}
+                    className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium flex-shrink-0 cursor-pointer"
+                    title="Import request from cURL command"
+                  >
+                    <Terminal className="h-4 w-4 text-indigo-400" />
+                    <span className="hidden sm:inline">Import</span> cURL
+                  </button>
                   {lastRequest && (
                     <button
                       onClick={handleRestoreLastRequest}
@@ -2128,6 +2153,11 @@ export default function Dashboard() {
       <KeyboardShortcutsModal
         isOpen={showKeyboardShortcuts}
         onClose={() => setShowKeyboardShortcuts(false)}
+      />
+      <ImportCurlModal
+        isOpen={showImportCurlModal}
+        onClose={() => setShowImportCurlModal(false)}
+        onImport={handleImportCurl}
       />
       {showSaveRequestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
