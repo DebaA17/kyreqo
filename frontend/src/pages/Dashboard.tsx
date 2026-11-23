@@ -218,6 +218,8 @@ export default function Dashboard() {
   const [requestType, setRequestType] = useState<'http' | 'websocket' | 'graphql'>('http');
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [copiedHeaderKey, setCopiedHeaderKey] = useState<string | null>(null);
+  const [areAllHeadersCopied, setAreAllHeadersCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [isCurlSaved, setIsCurlSaved] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
@@ -510,6 +512,38 @@ export default function Dashboard() {
       }, 2000);
     } catch (err) {
       console.error('Failed to copy cURL:', err);
+    }
+  };
+
+  const handleCopyResponseHeader = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+
+      setCopiedHeaderKey(key);
+
+      setTimeout(() => {
+        setCopiedHeaderKey(currentKey => (currentKey === key ? null : currentKey));
+      }, 2000);
+    } catch (err) {
+      console.error(`Failed to copy response header "${key}":`, err);
+    }
+  };
+
+  const handleCopyAllResponseHeaders = async () => {
+    try {
+      const headersText = Object.entries(responseHeaders)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
+
+      await navigator.clipboard.writeText(headersText);
+
+      setAreAllHeadersCopied(true);
+
+      setTimeout(() => {
+        setAreAllHeadersCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy response headers:', err);
     }
   };
 
@@ -2068,29 +2102,71 @@ export default function Dashboard() {
                   ) : (
                     <div className="flex-1 p-3 sm:p-4 overflow-auto">
                       {Object.keys(responseHeaders).length > 0 ? (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-zinc-800">
-                              <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
-                              <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(responseHeaders).map(([key, value]) => (
-                              <tr
-                                key={key}
-                                className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
-                              >
-                                <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
-                                  {key}
-                                </td>
-                                <td className="py-1.5 text-zinc-300 font-mono text-[11px] break-all">
-                                  {value}
-                                </td>
+                        <>
+                          {/* Copy All button */}
+                          <div className="flex justify-end mb-2">
+                            <button
+                              type="button"
+                              onClick={handleCopyAllResponseHeaders}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition text-[11px]"
+                              title="Copy all response headers"
+                            >
+                              {areAllHeadersCopied ? (
+                                <>
+                                  <Check className="h-3 w-3 text-green-400" />
+                                  Copied!
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" />
+                                  Copy All
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-zinc-800">
+                                <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
+                                <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+
+                            <tbody>
+                              {Object.entries(responseHeaders).map(([key, value]) => (
+                                <tr
+                                  key={key}
+                                  className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
+                                >
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
+                                    {key}
+                                  </td>
+
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px]">
+                                    <div className="flex items-start gap-2">
+                                      <span className="flex-1 break-all">{value}</span>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCopyResponseHeader(key, value)}
+                                        className="flex-shrink-0 p-1 text-zinc-500 hover:text-indigo-400 transition"
+                                        title={`Copy ${key} value`}
+                                        aria-label={`Copy ${key} value`}
+                                      >
+                                        {copiedHeaderKey === key ? (
+                                          <Check className="h-3.5 w-3.5 text-green-400" />
+                                        ) : (
+                                          <Copy className="h-3.5 w-3.5" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </>
                       ) : (
                         <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
                           No headers received
