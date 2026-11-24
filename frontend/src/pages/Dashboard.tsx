@@ -18,6 +18,7 @@ import {
   Radio,
   Globe,
   Zap,
+  HelpCircle,
 } from 'lucide-react';
 import GraphQLPanel from '../components/GraphQLPanel';
 import WebSocketPanel from '../components/WebSocketPanel';
@@ -42,6 +43,9 @@ import { RequestHistory } from '../types/history';
 import useHistoryStore from '../store/historyStore';
 import { useEffect, useCallback } from 'react';
 import TwoFactorSettings from '../components/TwoFactorSettings';
+import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
+import ImportCurlModal from '../components/ImportCurlModal';
+import { ParsedCurl } from '../utils/curlParser';
 
 interface RequestHeader {
   key: string;
@@ -214,6 +218,8 @@ export default function Dashboard() {
   const [requestType, setRequestType] = useState<'http' | 'websocket' | 'graphql'>('http');
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [copiedHeaderKey, setCopiedHeaderKey] = useState<string | null>(null);
+  const [areAllHeadersCopied, setAreAllHeadersCopied] = useState(false);
   const [isCurlCopied, setIsCurlCopied] = useState(false);
   const [isCurlSaved, setIsCurlSaved] = useState(false);
   const [urlSuggestions, setUrlSuggestions] = useState<string[]>([]);
@@ -258,6 +264,8 @@ export default function Dashboard() {
     null
   );
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showImportCurlModal, setShowImportCurlModal] = useState(false);
   const [showSaveRequestModal, setShowSaveRequestModal] = useState(false);
   const [saveRequestName, setSaveRequestName] = useState('');
   const [saveCollectionId, setSaveCollectionId] = useState<number | ''>('');
@@ -507,6 +515,38 @@ export default function Dashboard() {
     }
   };
 
+  const handleCopyResponseHeader = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+
+      setCopiedHeaderKey(key);
+
+      setTimeout(() => {
+        setCopiedHeaderKey(currentKey => (currentKey === key ? null : currentKey));
+      }, 2000);
+    } catch (err) {
+      console.error(`Failed to copy response header "${key}":`, err);
+    }
+  };
+
+  const handleCopyAllResponseHeaders = async () => {
+    try {
+      const headersText = Object.entries(responseHeaders)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
+
+      await navigator.clipboard.writeText(headersText);
+
+      setAreAllHeadersCopied(true);
+
+      setTimeout(() => {
+        setAreAllHeadersCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy response headers:', err);
+    }
+  };
+
   const handleSaveCurl = () => {
     try {
       const curlCommand = generateCurlCommand();
@@ -682,6 +722,19 @@ export default function Dashboard() {
     setQueryParams(parseUrlToParams(lastRequest.url));
     setHeaders(lastRequest.headers);
     setBody(lastRequest.body);
+    setShowUrlSuggestions(false);
+    setActiveSuggestionIndex(-1);
+  };
+
+  const handleImportCurl = (parsed: ParsedCurl) => {
+    setMethod(parsed.method);
+    setUrl(parsed.url);
+    setQueryParams(parseUrlToParams(parsed.url));
+    setHeaders(parsed.headers);
+    if (parsed.body) {
+      setBody(parsed.body);
+      setActiveTab('body');
+    }
     setShowUrlSuggestions(false);
     setActiveSuggestionIndex(-1);
   };
@@ -872,18 +925,26 @@ export default function Dashboard() {
         }
       }
 
-      if (event.key === 'h' || event.key === 'H') {
-        const activeEl = document.activeElement;
-        const isInputFocused =
-          activeEl &&
-          (activeEl.tagName === 'INPUT' ||
-            activeEl.tagName === 'TEXTAREA' ||
-            activeEl.getAttribute('contenteditable') === 'true');
+      const activeEl = document.activeElement;
+      const isInputFocused =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.getAttribute('contenteditable') === 'true');
 
-        if (!isInputFocused) {
-          event.preventDefault();
-          setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
-        }
+      if (event.key === '?' && !isInputFocused) {
+        event.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+
+      if (event.key === 'Escape' && showKeyboardShortcuts) {
+        event.preventDefault();
+        setShowKeyboardShortcuts(false);
+      }
+
+      if ((event.key === 'h' || event.key === 'H') && !isInputFocused) {
+        event.preventDefault();
+        setActiveSidebarTab(prev => (prev === 'history' ? 'collections' : 'history'));
       }
     };
 
@@ -891,7 +952,7 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [loading, handleSend, requestType]);
+  }, [loading, handleSend, requestType, showKeyboardShortcuts]);
 
   // Check if onboarding should show on first login
   useEffect(() => {
@@ -935,6 +996,17 @@ export default function Dashboard() {
             <Shield className="h-4 w-4 text-emerald-500" />
             <span>SSRF Protection Engaged</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowKeyboardShortcuts(true)}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Shortcuts</span>
+            <kbd className="text-[9px] text-zinc-500">?</kbd>
+          </button>
         </div>
       </header>
 
@@ -1471,6 +1543,15 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setShowImportCurlModal(true)}
+                    className="flex-1 md:flex-none justify-center px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium flex-shrink-0 cursor-pointer"
+                    title="Import request from cURL command"
+                  >
+                    <Terminal className="h-4 w-4 text-indigo-400" />
+                    <span className="hidden sm:inline">Import</span> cURL
+                  </button>
                   {lastRequest && (
                     <button
                       onClick={handleRestoreLastRequest}
@@ -2021,29 +2102,71 @@ export default function Dashboard() {
                   ) : (
                     <div className="flex-1 p-3 sm:p-4 overflow-auto">
                       {Object.keys(responseHeaders).length > 0 ? (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-zinc-800">
-                              <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
-                              <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(responseHeaders).map(([key, value]) => (
-                              <tr
-                                key={key}
-                                className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
-                              >
-                                <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
-                                  {key}
-                                </td>
-                                <td className="py-1.5 text-zinc-300 font-mono text-[11px] break-all">
-                                  {value}
-                                </td>
+                        <>
+                          {/* Copy All button */}
+                          <div className="flex justify-end mb-2">
+                            <button
+                              type="button"
+                              onClick={handleCopyAllResponseHeaders}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded transition text-[11px]"
+                              title="Copy all response headers"
+                            >
+                              {areAllHeadersCopied ? (
+                                <>
+                                  <Check className="h-3 w-3 text-green-400" />
+                                  Copied!
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" />
+                                  Copy All
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-zinc-800">
+                                <th className="text-left py-2 text-zinc-400 font-medium">Header</th>
+                                <th className="text-left py-2 text-zinc-400 font-medium">Value</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+
+                            <tbody>
+                              {Object.entries(responseHeaders).map(([key, value]) => (
+                                <tr
+                                  key={key}
+                                  className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition"
+                                >
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px] pr-4">
+                                    {key}
+                                  </td>
+
+                                  <td className="py-1.5 text-zinc-300 font-mono text-[11px]">
+                                    <div className="flex items-start gap-2">
+                                      <span className="flex-1 break-all">{value}</span>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCopyResponseHeader(key, value)}
+                                        className="flex-shrink-0 p-1 text-zinc-500 hover:text-indigo-400 transition"
+                                        title={`Copy ${key} value`}
+                                        aria-label={`Copy ${key} value`}
+                                      >
+                                        {copiedHeaderKey === key ? (
+                                          <Check className="h-3.5 w-3.5 text-green-400" />
+                                        ) : (
+                                          <Copy className="h-3.5 w-3.5" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </>
                       ) : (
                         <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
                           No headers received
@@ -2103,6 +2226,15 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <KeyboardShortcutsModal
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
+      <ImportCurlModal
+        isOpen={showImportCurlModal}
+        onClose={() => setShowImportCurlModal(false)}
+        onImport={handleImportCurl}
+      />
       {showSaveRequestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm">
